@@ -1,19 +1,26 @@
 import { GLUtilities, gl } from './GL';
 
 export class Engine {
-    private _canvas: HTMLCanvasElement | null;
+    private canvas: HTMLCanvasElement | null;
 
 
     public constructor() {
-        this._canvas = null;
+        this.canvas = null;
     }
 
     public start(): void {
-        this._canvas = GLUtilities.initialize();
-
+        this.canvas = GLUtilities.initialize();
+        this.resize();
         gl.clearColor(0,0,0,1);
 
         this.loop();
+    }
+
+    public resize(): void {
+        if ( this.canvas !== undefined ) {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = innerHeight;
+        }
     }
 
     private loop(): void {

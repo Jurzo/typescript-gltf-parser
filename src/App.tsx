@@ -3,10 +3,13 @@ import './App.css';
 import * as TSE from './bin/TSE';
 
 function App(): ReactElement {
-  const e = new TSE.Engine();
+  const engine = new TSE.Engine();
 
   useEffect(()=> {
-    e.start();
+    engine.start();
+    window.onresize = function() {
+      engine.resize();
+    }
   }, []);
   
   return (
