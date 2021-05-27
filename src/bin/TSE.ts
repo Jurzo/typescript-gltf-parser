@@ -1,8 +1,9 @@
-import { GLUtilities, gl } from './GL';
+import { GLUtilities, gl } from './gl/GL';
+import { Shader } from './gl/Shader';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
-
+    private shader: Shader;
 
     public constructor() {
         this.canvas = null;
@@ -12,6 +13,7 @@ export class Engine {
         this.canvas = GLUtilities.initialize();
         this.resize();
         gl.clearColor(0,0,0,1);
+        this.loadShaders();
 
         this.loop();
     }
@@ -26,6 +28,26 @@ export class Engine {
     private loop(): void {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
+        this.shader.use();
+
         requestAnimationFrame(this.loop.bind( this ));
+    }
+
+    private loadShaders(): void {
+        const vertexShaderSource = 
+        `attribute vec3 aPos;
+
+        void main() {
+            gl_Position = vec4(aPos, 1.0);    
+        }`;
+
+        const fragmentShaderSource = 
+        `precision mediump float;
+
+        void main() {
+            gl_FragColor = vec4(1.0);    
+        }`;
+
+        this.shader = new Shader("basic", vertexShaderSource, fragmentShaderSource);
     }
 }
