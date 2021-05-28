@@ -5,32 +5,62 @@ export class Engine {
     private canvas: HTMLCanvasElement | null;
     private shader: Shader;
 
+    private buffer: WebGLBuffer;
+
     public constructor() {
         this.canvas = null;
     }
 
-    public start(): void {
-        this.canvas = GLUtilities.initialize();
-        this.resize();
-        gl.clearColor(0,0,0,1);
-        this.loadShaders();
-
-        this.loop();
-    }
-
     public resize(): void {
         if ( this.canvas !== undefined ) {
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = innerHeight;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            this.canvas.width = width;
+            this.canvas.height = height;
+
+            gl.viewport(0, 0, width, height);
         }
+    }
+
+    public start(): void {
+        this.canvas = GLUtilities.initialize();
+        gl.clearColor(0,0,0,1);
+        this.loadShaders();
+        this.createBuffer();
+        this.resize();
+        this.loop();
     }
 
     private loop(): void {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.shader.use();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(0);
+
+
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         requestAnimationFrame(this.loop.bind( this ));
+    }
+
+    private createBuffer(): void {
+        this.buffer = gl.createBuffer();
+
+        const verts = [
+            // x, y, z
+            0.0, 0.0, 0.0,     // bottom left
+            0.0, 1.0, 0.0,   // top left
+            1.0, 1.0, 0.0  // top right
+        ];
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(0);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, undefined);
+        gl.disableVertexAttribArray(0);
     }
 
     private loadShaders(): void {

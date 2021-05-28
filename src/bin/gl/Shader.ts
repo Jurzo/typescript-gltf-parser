@@ -21,7 +21,6 @@ export class Shader {
 
     private loadShader(source: string, shaderType: number): WebGLShader {
         const shader: WebGLShader = gl.createShader(shaderType);
-        console.log(gl);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         const error = gl.getShaderInfoLog(shader);
