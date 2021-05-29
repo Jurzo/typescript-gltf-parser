@@ -6,6 +6,7 @@ export class Engine {
     private shader: Shader;
 
     private buffer: WebGLBuffer;
+    private VAO: WebGLVertexArrayObject;
 
     public constructor() {
         this.canvas = null;
@@ -35,11 +36,7 @@ export class Engine {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.shader.use();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(0);
-
-
+        gl.bindVertexArray(this.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         requestAnimationFrame(this.loop.bind( this ));
@@ -47,7 +44,7 @@ export class Engine {
 
     private createBuffer(): void {
         this.buffer = gl.createBuffer();
-
+        this.VAO = gl.createVertexArray();
         const verts = [
             // x, y, z
             0.0, 0.0, 0.0,     // bottom left
@@ -56,11 +53,13 @@ export class Engine {
         ];
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+        gl.bindVertexArray(this.VAO);
+
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(0);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+        gl.bindVertexArray(undefined);
         gl.bindBuffer(gl.ARRAY_BUFFER, undefined);
-        gl.disableVertexAttribArray(0);
     }
 
     private loadShaders(): void {
