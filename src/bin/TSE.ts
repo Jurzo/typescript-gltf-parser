@@ -1,5 +1,6 @@
 import { GLUtilities, gl } from './gl/GL';
 import { Shader } from './gl/Shader';
+import * as glm from 'gl-matrix';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -29,6 +30,8 @@ export class Engine {
         this.loadShaders();
         this.createBuffer();
         this.resize();
+        const x = glm.mat4.create();
+        console.log(x);
         this.loop();
     }
 
