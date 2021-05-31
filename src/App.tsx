@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect } from 'react';
 import './App.css';
-import * as TSE from './bin/TSE';
+import * as TSE from './include/TSE';
 
 function App(): ReactElement {
   const engine = new TSE.Engine();

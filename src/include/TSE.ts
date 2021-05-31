@@ -1,5 +1,5 @@
-import { GLUtilities, gl } from './gl/GL';
-import { Shader } from './gl/Shader';
+import { GLUtilities, gl } from './GL';
+import { Shader } from './Shader';
 import * as glm from 'gl-matrix';
 
 export class Engine {
