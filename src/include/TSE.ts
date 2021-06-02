@@ -1,6 +1,7 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
 import * as glm from 'gl-matrix';
+import * as twgl from 'twgl.js';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
