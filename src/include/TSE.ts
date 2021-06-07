@@ -1,7 +1,7 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
 import * as glm from 'gl-matrix';
-import * as twgl from 'twgl.js';
+import { Model } from './Model';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -31,8 +31,7 @@ export class Engine {
         this.loadShaders();
         this.createBuffer();
         this.resize();
-        const x = glm.mat4.create();
-        console.log(x);
+        const model = new Model('resources/cube.obj');
         this.loop();
     }
 
@@ -42,7 +41,6 @@ export class Engine {
         this.shader.use();
         gl.bindVertexArray(this.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
-
         requestAnimationFrame(this.loop.bind( this ));
     }
 
