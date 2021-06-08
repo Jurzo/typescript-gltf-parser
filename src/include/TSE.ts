@@ -9,6 +9,7 @@ export class Engine {
 
     private buffer: WebGLBuffer;
     private VAO: WebGLVertexArrayObject;
+    private model: Model;
 
     public constructor() {
         this.canvas = null;
@@ -31,7 +32,7 @@ export class Engine {
         this.loadShaders();
         this.createBuffer();
         this.resize();
-        const model = new Model('resources/cube.obj');
+        this.model = new Model('resources/cube.obj');
         this.loop();
     }
 
@@ -39,8 +40,7 @@ export class Engine {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.shader.use();
-        gl.bindVertexArray(this.VAO);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        this.model.draw();
         requestAnimationFrame(this.loop.bind( this ));
     }
 
@@ -66,17 +66,27 @@ export class Engine {
 
     private loadShaders(): void {
         const vertexShaderSource = 
-        `attribute vec3 aPos;
+        `#version 300 es
+        layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec2 aTexCoord;
+        layout (location = 2) in vec3 aNormal;
+
+        out vec2 TexCoord;
 
         void main() {
-            gl_Position = vec4(aPos, 1.0);    
+            gl_Position = vec4(aPos, 1.0);
+            TexCoord = aTexCoord;  
         }`;
 
         const fragmentShaderSource = 
-        `precision mediump float;
+        `#version 300 es
+        precision highp float;
+        out vec4 fragColor;
+
+        in vec2 TexCoord;
 
         void main() {
-            gl_FragColor = vec4(1.0);    
+            fragColor = vec4(TexCoord, 1.0, 1.0);    
         }`;
 
         this.shader = new Shader("basic", vertexShaderSource, fragmentShaderSource);

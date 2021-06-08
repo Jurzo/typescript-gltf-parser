@@ -1,111 +1,115 @@
+import * as twgl from 'twgl.js';
+import { gl } from './GL';
+import { Mesh } from './Mesh';
+
 interface Geometry {
     object: string;
     groups: string[];
     material: string;
-    data : {
+    data: {
         position: number[];
         texcoord: number[];
         normal: number[];
     };
 }
 
+
 export class Model {
-    public geometries: Geometry[];
-    public materialLibs: string[];
+    private meshes: Mesh[];
+    private loaded = false;
 
     constructor(path: string) {
         this.loadModel(path);
     }
 
-    private loadModel(path: string): void {
-        let data: string;
-        fetch(path)
-            .then(resp => resp.text())
-            .then(text => data = text);
-        this.processData(data);
+    public draw(): void {
+        if (this.loaded)
+            this.meshes.forEach(mesh => mesh.draw());
     }
 
+    private loadModel(path: string): void {
+        fetch(path)
+            .then(resp => resp.text())
+            .then(text => {
+                this.processData(text);
+                this.loaded = true;
+            });
+    }
+
+    /*
+    ** For each mesh
+    First read all vertex data (pos, norm, texCoord) into a list each.
+    Then read faces and based on face data create an object with the key being
+    the vertex data for the current vertex (pos, norm, texCoord).
+    Keep count of the current index and add it to indices-list for each vertex of a face.
+    If the current vertex is not found in the map, increment the index and add it
+    to the map.
+
+    ** Splitting model to meshes
+    Whenever a new material, object or group is encountered when reading the obj file,
+    create a new mesh. A mesh holds data of its vertices, indices and textures as well
+    as its buffers.
+    */
     private processData(data: string): void {
+        const meshes: Mesh[] = [];
         // because indices are base 1 let's just fill in the 0th data
         const objPositions = [[0, 0, 0]];
         const objTexcoords = [[0, 0]];
         const objNormals = [[0, 0, 0]];
 
-        // same order as `f` indices
-        const objVertexData = [
-            objPositions,
-            objTexcoords,
-            objNormals,
-        ];
+        // used to identify and discard duplicate vertices while parsing
+        // key is vertex data, value is index
+        let vertMap: Map<string, number>;
+        let vertices: number[];
+        let indices: number[];
+        let currentIndex = 0;
 
-        // same order as `f` indices
-        let webglVertexData: number[][] = [
-            [],   // positions
-            [],   // texcoords
-            [],   // normals
-        ];
-
-        const geometries: Geometry[] = [];
         const materialLibs: string[] = [];
-        let geometry: Geometry;
         let groups = ['default'];
         let object = 'default';
         let material = 'default';
 
-        function newGeometry(): void {
-            if (geometry && geometry.data.position.length) {
-                geometry = undefined;
+        function newMesh(): void {
+            if (indices && indices.length > 0) {
+                meshes.push(new Mesh(vertices, indices));
             }
+
+            vertMap = new Map<string, number>();
+            vertices = [];
+            indices = [];
+            currentIndex = 0;
         }
 
-        function setGeometry(): void {
-            if (!geometry) {
-                const position: number[] = [];
-                const texcoord: number[] = [];
-                const normal: number[] = [];
-                webglVertexData = [
-                    position,
-                    texcoord,
-                    normal
-                ];
-                geometry = {
-                    object,
-                    groups,
-                    material,
-                    data: {
-                        position,
-                        texcoord,
-                        normal
-                    }
-                };
-                geometries.push(geometry);
-            }
-        }
-
+        // Assumes data that has pos, norm, tex
         function addVertex(vert: string): void {
-            const ptn = vert.split('/');
-            ptn.forEach((objIndexStr, i) => {
-                if (!objIndexStr) {
-                    return;
-                }
-                const objIndex = parseInt(objIndexStr);
-                const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
-                webglVertexData[i].push(...objVertexData[i][index]);
-            });
+            const points = vert.split('/');
+            const vertex = [
+                ...objPositions[parseInt(points[0])],
+                ...objTexcoords[parseInt(points[1])],
+                ...objNormals[parseInt(points[2])]
+            ];
+            const key = vertex.map(point => point.toString()).join('');
+            if (vertMap.has(key)) {
+                indices.push(vertMap.get(key));
+            } else {
+                vertMap.set(key, currentIndex);
+                vertices.push(...vertex);
+                indices.push(currentIndex);
+                currentIndex++;
+            }
         }
 
         const keywords: { [key: string]: (parts: string[], unparsedArgs?: string) => void } = {
-            v (parts: string[]): void {
+            v(parts: string[]): void {
                 objPositions.push(parts.map(parseFloat));
             },
-            vn (parts: string[]): void {
+            vn(parts: string[]): void {
                 objNormals.push(parts.map(parseFloat));
             },
             vt(parts: string[]): void {
                 objTexcoords.push(parts.map(parseFloat));
             },
             f(parts: string[]): void {
-                setGeometry();
                 const numTriangles = parts.length - 2;
                 for (let tri = 0; tri < numTriangles; ++tri) {
                     addVertex(parts[0]);
@@ -115,18 +119,18 @@ export class Model {
             },
             usemtl(parts: string[], unparsedArgs: string): void {
                 material = unparsedArgs;
-                newGeometry();
+                newMesh();
             },
             mtllib(parts: string[], unparsedArgs: string): void {
                 materialLibs.push(unparsedArgs);
             },
             o(parts: string[], unparsedArgs: string): void {
                 object = unparsedArgs;
-                newGeometry();
+                newMesh();
             },
             g(parts: string[]): void {
                 groups = parts;
-                newGeometry();
+                newMesh();
             },
             s(parts: string[], unparsedArgs: string): void {
                 console.log('not supported\n', parts, unparsedArgs);
@@ -136,7 +140,7 @@ export class Model {
         const keywordRE = /(\w*)(?: )*(.*)/;
         const lines = data.split('\n');
         for (let i = 0; i < lines.length; ++i) {
-            const line = lines[i];
+            const line = lines[i].trim();
             if (line === '' || line.startsWith('#')) {
                 continue;
             }
@@ -152,8 +156,9 @@ export class Model {
             console.log(unparsedArgs);
             handler(parts);
         }
-        
-        this.geometries = geometries;
-        this.materialLibs = materialLibs;
+
+        meshes.push(new Mesh(vertices, indices));
+        this.meshes = meshes;
     }
+
 }
