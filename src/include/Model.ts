@@ -153,8 +153,8 @@ export class Model {
             if (!handler) {
                 console.warn('unhandled keyword:', keyword, 'at line', i + 1);
             }
-            console.log(unparsedArgs);
-            handler(parts);
+            
+            handler(parts, unparsedArgs);
         }
 
         meshes.push(new Mesh(vertices, indices));

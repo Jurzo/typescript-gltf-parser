@@ -10,7 +10,6 @@ export class Mesh {
     constructor(vertices: number[], indices: number[]) {
         this.vertices = vertices;
         this.indices = indices;
-        console.log(vertices, indices);
 
         this.setupMesh();
     }

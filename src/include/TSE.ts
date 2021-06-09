@@ -1,6 +1,5 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
-import * as glm from 'gl-matrix';
 import { Model } from './Model';
 
 export class Engine {
@@ -74,7 +73,7 @@ export class Engine {
         out vec2 TexCoord;
 
         void main() {
-            gl_Position = vec4(aPos, 1.0);
+            gl_Position = vec4(aPos / 1.0, 1.0);
             TexCoord = aTexCoord;  
         }`;
 
