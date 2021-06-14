@@ -1,7 +1,7 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
 import { Model } from './Model';
-import { m4 } from './MathFunctions';
+import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
 
 export class Engine {
@@ -11,6 +11,9 @@ export class Engine {
     private uniformLocations: WebGLUniformLocation[] = [];
 
     private model: Model;
+    private rot = 0.0;
+
+    private lastFrame = 0;
 
     public constructor() {
         this.canvas = null;
@@ -37,21 +40,29 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'model'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'view'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
+        this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'color'));
         this.resize();
         this.model = new Model('resources/cube.obj');
-        this.loop();
+        this.loop(0);
     }
 
-    private loop(): void {
+    private loop(now: number): void {
         gl.clear(gl.COLOR_BUFFER_BIT);
+
+        const deltaTime = now - this.lastFrame;
+        this.lastFrame = now;
+        console.log(deltaTime);
 
         this.shader.use();
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);
         const view = this.camera.getViewMatrix();
-        const model = m4.identity();
+        let model = m4.identity();
+        model = m4.quatRotation(v3.normalize([1.0, 0.8, 0.0]), this.rot);
+        this.rot = (this.rot + 1) % 360;
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
+        gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
         this.model.draw();
         requestAnimationFrame(this.loop.bind( this ));
     }
@@ -69,11 +80,12 @@ export class Engine {
         uniform mat4 model;
         uniform mat4 view;
         uniform mat4 projection;
+        uniform vec3 color;
 
         void main() {
             gl_Position = projection * view * model * vec4(aPos, 1.0);
             TexCoord = aTexCoord;
-            OurColor = vec3(1.0, 1.0, 1.0);
+            OurColor = color;
         }`;
 
         const fragmentShaderSource = 
