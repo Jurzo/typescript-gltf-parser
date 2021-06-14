@@ -19,6 +19,11 @@ export class Shader {
         gl.useProgram(this.program);
     }
 
+    // temp
+    public getProgram(): WebGLProgram {
+        return this.program;
+    }
+
     private loadShader(source: string, shaderType: number): WebGLShader {
         const shader: WebGLShader = gl.createShader(shaderType);
         gl.shaderSource(shader, source);
