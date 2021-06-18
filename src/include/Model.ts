@@ -1,18 +1,4 @@
-import * as twgl from 'twgl.js';
-import { gl } from './GL';
 import { Mesh } from './Mesh';
-
-interface Geometry {
-    object: string;
-    groups: string[];
-    material: string;
-    data: {
-        position: number[];
-        texcoord: number[];
-        normal: number[];
-    };
-}
-
 
 export class Model {
     private meshes: Mesh[];

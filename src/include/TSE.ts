@@ -42,7 +42,7 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'color'));
         this.resize();
-        this.model = new Model('resources/cube.obj');
+        this.model = new Model('resources/Chair.obj');
         this.loop(0);
     }
 
