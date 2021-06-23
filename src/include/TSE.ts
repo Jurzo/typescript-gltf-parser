@@ -3,6 +3,7 @@ import { Shader } from './Shader';
 import { Model } from './Model';
 import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
+import { Scene } from './Scene';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -31,6 +32,8 @@ export class Engine {
     }
 
     public start(): void {
+        const scene = new Scene('resources/tree.gltf');
+
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
         this.camera.setTarget([0, 0, 0]);
@@ -51,7 +54,7 @@ export class Engine {
 
         const deltaTime = now - this.lastFrame;
         this.lastFrame = now;
-        console.log(deltaTime);
+        //console.log(deltaTime);
 
         this.shader.use();
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);

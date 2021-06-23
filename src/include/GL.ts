@@ -11,8 +11,12 @@ export class GLUtilities {
                 throw new Error("Cannot find a canvas element named: " + elementId);
             }
         } else {
-            canvas = document.createElement('canvas') as HTMLCanvasElement;
-            document.getElementById('container')?.appendChild(canvas);
+            if (document.getElementById('container')?.children.length > 0) {
+                canvas = document.getElementsByTagName('canvas')[0] as HTMLCanvasElement;
+            } else {
+                canvas = document.createElement('canvas') as HTMLCanvasElement;
+                document.getElementById('container')?.appendChild(canvas);
+            }
         }
 
         gl = canvas.getContext('webgl2');
