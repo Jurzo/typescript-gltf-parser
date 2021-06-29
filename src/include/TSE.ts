@@ -3,7 +3,7 @@ import { Shader } from './Shader';
 import { Model } from './Model';
 import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
-import { Scene } from './Scene';
+import { Asset } from './Asset';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -32,7 +32,7 @@ export class Engine {
     }
 
     public start(): void {
-        const scene = new Scene('resources/tree.gltf');
+        const asset = new Asset('resources/cube_and_cam.gltf');
 
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
@@ -45,7 +45,7 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'color'));
         this.resize();
-        this.model = new Model('resources/Chair.obj');
+        this.model = new Model('resources/cube.obj');
         this.loop(0);
     }
 
