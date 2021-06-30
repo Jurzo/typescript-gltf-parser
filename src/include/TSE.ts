@@ -1,6 +1,5 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
-import { Model } from './Model';
 import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
 import { Asset } from './Asset';
@@ -11,7 +10,7 @@ export class Engine {
     private camera: Camera;
     private uniformLocations: WebGLUniformLocation[] = [];
 
-    private model: Model;
+    private asset: Asset;
     private rot = 0.0;
 
     private lastFrame = 0;
@@ -32,7 +31,7 @@ export class Engine {
     }
 
     public start(): void {
-        const asset = new Asset('resources/cube_and_cam.gltf');
+        this.asset = new Asset('resources/test.gltf');
 
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
@@ -45,7 +44,6 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'color'));
         this.resize();
-        this.model = new Model('resources/cube.obj');
         this.loop(0);
     }
 
@@ -66,7 +64,9 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
         gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
-        this.model.draw();
+        if (this.asset.isReady()) {
+            this.asset.draw();
+        }
         requestAnimationFrame(this.loop.bind( this ));
     }
 
@@ -74,11 +74,10 @@ export class Engine {
         const vertexShaderSource = 
         `#version 300 es
         layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec2 aTexCoord;
-        layout (location = 2) in vec3 aNormal;
+        layout (location = 1) in vec3 aNormal;
+        layout (location = 2) in vec2 aTexCoord;
 
         out vec3 OurColor;
-        out vec2 TexCoord;
 
         uniform mat4 model;
         uniform mat4 view;
@@ -87,7 +86,6 @@ export class Engine {
 
         void main() {
             gl_Position = projection * view * model * vec4(aPos, 1.0);
-            TexCoord = aTexCoord;
             OurColor = color;
         }`;
 
@@ -97,7 +95,6 @@ export class Engine {
         out vec4 fragColor;
 
         in vec3 OurColor;
-        in vec2 TexCoord;
 
         void main() {
             fragColor = vec4(OurColor, 1.0);    
