@@ -31,7 +31,7 @@ export class Engine {
     }
 
     public start(): void {
-        this.asset = new Asset('resources/test.gltf');
+        this.asset = new Asset('resources/dude.gltf');
 
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
@@ -74,8 +74,6 @@ export class Engine {
         const vertexShaderSource = 
         `#version 300 es
         layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec3 aNormal;
-        layout (location = 2) in vec2 aTexCoord;
 
         out vec3 OurColor;
 

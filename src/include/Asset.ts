@@ -19,8 +19,8 @@ export class Asset {
     }
 
     public draw(): void {
-        let i = 0;
         for (const mesh of this.structure.meshes) {
+            let i = 0;
             for (const primitive of mesh.primitives) {
                 gl.bindVertexArray(this.VAOs[i]);
                 gl.drawElements(gl.TRIANGLES, this.structure.accessors[primitive.indices].count, this.structure.accessors[primitive.indices].componentType, 0);
@@ -63,31 +63,26 @@ export class Asset {
                 gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
 
                 // need to decide how to handle bufferdata so it is maybe not sent many times to the GPU
-                const posBuffer = new Float32Array(this.buffers[0], positionAccessor.byteOffset, positionAccessor.count);
-                const normalBuffer = new Float32Array(this.buffers[0], normalAccessor.byteOffset, normalAccessor.count);
+                const posBuffer = new Float32Array(this.buffers[0], this.structure.bufferViews[positionAccessor.bufferView].byteOffset, positionAccessor.count * 3);
+                /* const normalBuffer = new Float32Array(this.buffers[0], normalAccessor.byteOffset, normalAccessor.count);
                 const bufferData = new Float32Array(posBuffer.length + normalBuffer.length);
                 bufferData.set(posBuffer);
-                bufferData.set(normalBuffer, posBuffer.length);
-                const wholeBuffer = new Float32Array(this.buffers[0]);
-                gl.bufferData(gl.ARRAY_BUFFER, wholeBuffer, gl.STATIC_DRAW);
+                bufferData.set(normalBuffer, posBuffer.length); */
+                gl.bufferData(gl.ARRAY_BUFFER, posBuffer, gl.STATIC_DRAW);
 
-                const indexBuffer = new Uint8Array(this.buffers[0], indexAccessor.byteOffset, indexAccessor.count);
-
-                for (let i = 0; i < indexBuffer.length; i++) {
-                    console.log(indexBuffer[i]);
-                }
+                const indexBuffer = new Uint16Array(this.buffers[0], this.structure.bufferViews[indexAccessor.bufferView].byteOffset, indexAccessor.count);
 
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.uint8ToUint16(indexBuffer), gl.STATIC_DRAW);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
 
                 gl.enableVertexAttribArray(0);
                 gl.vertexAttribPointer(0, 3, positionAccessor.componentType, false, 0, this.structure.bufferViews[positionAccessor.bufferView].byteOffset);
 
-                gl.enableVertexAttribArray(1);
+                /* gl.enableVertexAttribArray(1);
                 gl.vertexAttribPointer(1, 3, normalAccessor.componentType, false, 0, this.structure.bufferViews[normalAccessor.bufferView].byteOffset);
 
                 gl.enableVertexAttribArray(1);
-                gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset);
+                gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset); */
 
                 gl.bindVertexArray(undefined);
                 this.VAOs.push(VAO);
@@ -107,6 +102,7 @@ export class Asset {
             
             if (buffer.uri.includes('.bin')) {
                 const newBuffer = await this.readBinary(buffer.uri);
+                console.log(newBuffer);
                 this.buffers.push(newBuffer);
             }
         }
@@ -116,7 +112,7 @@ export class Asset {
     private decodeBase64(data: string, buffer: ArrayBuffer): void {
         const binaryString = atob(data);
         console.log(binaryString.length);
-        const bytes = new Uint16Array(buffer);
+        const bytes = new Uint8Array(buffer);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
         }
@@ -125,14 +121,5 @@ export class Asset {
     private async readBinary(uri: string): Promise<ArrayBuffer> {
         return fetch('resources/' + uri)
         .then(resp => resp.arrayBuffer());
-    }
-
-    private uint8ToUint16(array: Uint8Array): Uint16Array {
-        let count = 0;
-        const newArr = new Uint16Array(array.length);
-        for (let i = 0; i < newArr.length; i++) {
-            newArr[i] = array[count++];
-        }
-        return newArr;
     }
 }
