@@ -1,6 +1,15 @@
 import { gltfStructure } from "./gltf";
 import { gl } from "./GL";
 
+const typeToCount: {[key: string]: number} = {
+    'SCALAR': 1,
+    'VEC2': 2,
+    'VEC3': 3,
+    'VEC4': 4,
+    'MAT3': 9,
+    'MAT4': 16
+};
+
 export class Asset {
     private source: string;
     private structure: gltfStructure;
@@ -54,6 +63,7 @@ export class Asset {
                 const normalAccessor = this.structure.accessors[primitive.attributes.NORMAL];
                 const texAccessor = this.structure.accessors[primitive.attributes.TEXCOORD_0];
                 const indexAccessor = this.structure.accessors[primitive.indices];
+                const buffer = this.buffers[this.structure.bufferViews[positionAccessor.bufferView].buffer];
 
                 const VAO = gl.createVertexArray();
                 const VBO = gl.createBuffer();
@@ -61,16 +71,10 @@ export class Asset {
 
                 gl.bindVertexArray(VAO);
                 gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
+                gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
 
-                // need to decide how to handle bufferdata so it is maybe not sent many times to the GPU
-                const posBuffer = new Float32Array(this.buffers[0], this.structure.bufferViews[positionAccessor.bufferView].byteOffset, positionAccessor.count * 3);
-                /* const normalBuffer = new Float32Array(this.buffers[0], normalAccessor.byteOffset, normalAccessor.count);
-                const bufferData = new Float32Array(posBuffer.length + normalBuffer.length);
-                bufferData.set(posBuffer);
-                bufferData.set(normalBuffer, posBuffer.length); */
-                gl.bufferData(gl.ARRAY_BUFFER, posBuffer, gl.STATIC_DRAW);
-
-                const indexBuffer = new Uint16Array(this.buffers[0], this.structure.bufferViews[indexAccessor.bufferView].byteOffset, indexAccessor.count);
+                const indexByteOffset = this.structure.bufferViews[indexAccessor.bufferView].byteOffset + (indexAccessor.byteOffset || 0);
+                const indexBuffer = new Uint16Array(buffer, indexByteOffset, indexAccessor.count);
 
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
                 gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
@@ -78,11 +82,11 @@ export class Asset {
                 gl.enableVertexAttribArray(0);
                 gl.vertexAttribPointer(0, 3, positionAccessor.componentType, false, 0, this.structure.bufferViews[positionAccessor.bufferView].byteOffset);
 
-                /* gl.enableVertexAttribArray(1);
+                gl.enableVertexAttribArray(1);
                 gl.vertexAttribPointer(1, 3, normalAccessor.componentType, false, 0, this.structure.bufferViews[normalAccessor.bufferView].byteOffset);
 
                 gl.enableVertexAttribArray(1);
-                gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset); */
+                gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset);
 
                 gl.bindVertexArray(undefined);
                 this.VAOs.push(VAO);
@@ -111,7 +115,6 @@ export class Asset {
     // decoded data is little endian, so needs to be accounted for when changing from 8bit to 16bit
     private decodeBase64(data: string, buffer: ArrayBuffer): void {
         const binaryString = atob(data);
-        console.log(binaryString.length);
         const bytes = new Uint8Array(buffer);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
@@ -119,7 +122,7 @@ export class Asset {
     }
 
     private async readBinary(uri: string): Promise<ArrayBuffer> {
-        return fetch('resources/' + uri)
-        .then(resp => resp.arrayBuffer());
+        const resp = await fetch('resources/' + uri);
+        return await resp.arrayBuffer();
     }
 }

@@ -52,7 +52,7 @@ export class Engine {
 
         const deltaTime = now - this.lastFrame;
         this.lastFrame = now;
-        //console.log(deltaTime);
+        console.log(deltaTime);
 
         this.shader.use();
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);
@@ -74,6 +74,8 @@ export class Engine {
         const vertexShaderSource = 
         `#version 300 es
         layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aNormal;
+        layout (location = 2) in vec3 aTexCoord;
 
         out vec3 OurColor;
 
