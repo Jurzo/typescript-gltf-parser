@@ -16,9 +16,14 @@ export class Model {
         
 
     }
+    /**
+     * process all the meshes and textures and store them in individual Mesh
+     * objects. Maybe store the scene structure for accessing node transformations
+     * and for drawing the meshes and skins while using said transformations
+     */
 
     private processNode() {
-        
+
     }
 
 }
