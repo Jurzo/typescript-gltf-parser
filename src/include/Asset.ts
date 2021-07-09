@@ -10,6 +10,10 @@ const typeToCount: {[key: string]: number} = {
     'MAT4': 16
 };
 
+/**
+ * Change this class to gltfLoader and make it return a model-mesh object like in cpp project
+ */
+
 export class Asset {
     private source: string;
     private structure: gltfStructure;
@@ -27,14 +31,13 @@ export class Asset {
         return this.loaded;
     }
 
+    //TODO: account for loc-rot-scale transforms from parent nodes/meshes
     public draw(): void {
         for (const mesh of this.structure.meshes) {
-            let i = 0;
             for (const primitive of mesh.primitives) {
-                gl.bindVertexArray(this.VAOs[i]);
+                gl.bindVertexArray(primitive.VAO);
                 gl.drawElements(gl.TRIANGLES, this.structure.accessors[primitive.indices].count, this.structure.accessors[primitive.indices].componentType, 0);
                 gl.bindVertexArray(undefined);
-                i++;
             }
         }
     }
@@ -56,7 +59,6 @@ export class Asset {
      * and only using pos and normal attributes
      */
     private setGlBindings(): void {
-        console.log(this.buffers.keys);
         for (const mesh of this.structure.meshes) {
             for (const primitive of mesh.primitives) {
                 const positionAccessor = this.structure.accessors[primitive.attributes.POSITION];
@@ -89,7 +91,7 @@ export class Asset {
                 gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset);
 
                 gl.bindVertexArray(undefined);
-                this.VAOs.push(VAO);
+                primitive.VAO = VAO;
             }
         }
     }

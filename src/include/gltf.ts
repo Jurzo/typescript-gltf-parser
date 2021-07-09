@@ -87,7 +87,8 @@ export interface gltfStructure {
                 TEXCOORD_3?: number
             },
             indices: number,
-            material: number
+            material: number,
+            VAO?: WebGLVertexArrayObject
         }[],
         targets?: {
             POSITION?: number,

@@ -10,7 +10,7 @@ export class Engine {
     private camera: Camera;
     private uniformLocations: WebGLUniformLocation[] = [];
 
-    private asset: Asset;
+    private assets: Asset[] = [];
     private rot = 0.0;
 
     private lastFrame = 0;
@@ -31,7 +31,9 @@ export class Engine {
     }
 
     public start(): void {
-        this.asset = new Asset('resources/dude.gltf');
+        for (let i = 0; i < 10; i++) {
+            this.assets.push(new Asset('resources/tree.gltf'));
+        }
 
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
@@ -64,8 +66,8 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
         gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
-        if (this.asset.isReady()) {
-            this.asset.draw();
+        for (const asset of this.assets) {
+            if (asset.isReady()) asset.draw();
         }
         requestAnimationFrame(this.loop.bind( this ));
     }
