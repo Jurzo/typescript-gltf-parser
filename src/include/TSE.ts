@@ -2,7 +2,7 @@ import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
 import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
-import { Asset } from './Asset';
+import { GLTFImporter } from './GLTFImporter';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -10,7 +10,7 @@ export class Engine {
     private camera: Camera;
     private uniformLocations: WebGLUniformLocation[] = [];
 
-    private assets: Asset[] = [];
+    private assets: GLTFImporter[] = [];
     private rot = 0.0;
 
     private lastFrame = 0;
@@ -32,7 +32,7 @@ export class Engine {
 
     public start(): void {
         for (let i = 0; i < 10; i++) {
-            this.assets.push(new Asset('resources/tree.gltf'));
+            this.assets.push(new GLTFImporter('resources/tree.gltf'));
         }
 
         this.canvas = GLUtilities.initialize();

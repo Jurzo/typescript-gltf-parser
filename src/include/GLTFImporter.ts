@@ -1,5 +1,4 @@
 import { gltfStructure } from "./gltf";
-import { gl } from "./GL";
 
 const typeToCount: {[key: string]: number} = {
     'SCALAR': 1,
@@ -14,50 +13,23 @@ const typeToCount: {[key: string]: number} = {
  * Change this class to gltfLoader and make it return a model-mesh object like in cpp project
  */
 
-export class Asset {
-    private source: string;
-    private structure: gltfStructure;
-    private buffers: ArrayBuffer[] = [];
-    private loaded = false;
+export class GLTFImporter {
 
-    private VAOs: WebGLVertexArrayObject[] = [];
 
-    constructor(source: string) {
-        this.source = source;
-        this.readJson();
+    public static async loadModel(source: string): Promise<{scene: gltfStructure, buffers: ArrayBuffer[]}> {
+        const scene = await GLTFImporter.readJson(source);
+        const buffers = await this.loadBuffers(scene);
+
+        return {scene, buffers};
     }
 
-    public isReady(): boolean {
-        return this.loaded;
+    private static async readJson(source: string): Promise<gltfStructure>{
+        const resp = await fetch(source);
+        const scene = resp.json();
+        return scene;
     }
+/* 
 
-    //TODO: account for loc-rot-scale transforms from parent nodes/meshes
-    public draw(): void {
-        for (const mesh of this.structure.meshes) {
-            for (const primitive of mesh.primitives) {
-                gl.bindVertexArray(primitive.VAO);
-                gl.drawElements(gl.TRIANGLES, this.structure.accessors[primitive.indices].count, this.structure.accessors[primitive.indices].componentType, 0);
-                gl.bindVertexArray(undefined);
-            }
-        }
-    }
-
-    private readJson(): void{
-        fetch(this.source)
-        .then(resp => resp.json())
-        .then(body => {
-            this.structure = body;
-            this.loadBuffers().then(() => {
-                this.setGlBindings();
-                this.loaded = true;
-            });
-        });
-    }
-
-    /**
-     * skipping straight to meshes for now insted of nodes
-     * and only using pos and normal attributes
-     */
     private setGlBindings(): void {
         for (const mesh of this.structure.meshes) {
             for (const primitive of mesh.primitives) {
@@ -94,28 +66,30 @@ export class Asset {
                 primitive.VAO = VAO;
             }
         }
-    }
+    } */
 
-    private async loadBuffers(): Promise<void> {
-        for (const buffer of this.structure.buffers) {
+    private static async loadBuffers(scene: gltfStructure): Promise<ArrayBuffer[]> {
+        const buffers: ArrayBuffer[] = [];
+        for (const buffer of scene.buffers) {
             const newBuffer = new ArrayBuffer(buffer.byteLength);
             
             if (buffer.uri.includes('data:application/octet-stream;base64')) {
                 this.decodeBase64(buffer.uri.split(',')[1], newBuffer);
-                this.buffers.push(newBuffer);
+                buffers.push(newBuffer);
                 continue;
             }
             
             if (buffer.uri.includes('.bin')) {
                 const newBuffer = await this.readBinary(buffer.uri);
                 console.log(newBuffer);
-                this.buffers.push(newBuffer);
+                buffers.push(newBuffer);
             }
         }
+        return buffers;
     }
 
     // decoded data is little endian, so needs to be accounted for when changing from 8bit to 16bit
-    private decodeBase64(data: string, buffer: ArrayBuffer): void {
+    private static decodeBase64(data: string, buffer: ArrayBuffer): void {
         const binaryString = atob(data);
         const bytes = new Uint8Array(buffer);
         for (let i = 0; i < binaryString.length; i++) {
@@ -123,7 +97,7 @@ export class Asset {
         }
     }
 
-    private async readBinary(uri: string): Promise<ArrayBuffer> {
+    private static async readBinary(uri: string): Promise<ArrayBuffer> {
         const resp = await fetch('resources/' + uri);
         return await resp.arrayBuffer();
     }

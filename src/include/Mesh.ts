@@ -1,22 +1,37 @@
 import { gl } from './GL';
 
+export interface Texture {
+    id: number,
+    type: string,
+    path: string
+}
+
+export interface VertexLayout {
+    stride: number,
+    posOffset: number,
+    normalOffset: number,
+    texCoordsOffset: number
+}
+
 export class Mesh {
     public VAO: WebGLVertexArrayObject;
-    public vertices: number[];
-    public indices: number[];
+    public vertices: ArrayBuffer;
+    public indices: ArrayBuffer;
+    public vertexLayout: VertexLayout;
     private VBO: WebGLBuffer;
     private EBO: WebGLBuffer;
 
-    constructor(vertices: number[], indices: number[]) {
+    constructor(vertices: ArrayBuffer, indices: ArrayBuffer, vertexLayout: VertexLayout) {
         this.vertices = vertices;
         this.indices = indices;
+        this.vertexLayout = vertexLayout;
 
         this.setupMesh();
     }
 
     public draw(): void {
         gl.bindVertexArray(this.VAO);
-        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.indices.byteLength / 2, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(undefined);
     }
 
@@ -36,13 +51,13 @@ export class Mesh {
         // Set the vertex attribute pointers
         // pos
         gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
-        // texCoord
-        gl.enableVertexAttribArray(1);
-        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, this.vertexLayout.stride, this.vertexLayout.posOffset);
         // normal
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, this.vertexLayout.stride, this.vertexLayout.normalOffset);
+        // texCoord
         gl.enableVertexAttribArray(2);
-        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 20);
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, this.vertexLayout.stride, this.vertexLayout.texCoordsOffset);
 
         gl.bindVertexArray(undefined);
     }
