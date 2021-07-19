@@ -2,7 +2,7 @@ import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
 import { m4, v3 } from './MathFunctions';
 import { Camera } from './Camera';
-import { GLTFImporter } from './GLTFImporter';
+import { Model } from './Model';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;
@@ -10,7 +10,7 @@ export class Engine {
     private camera: Camera;
     private uniformLocations: WebGLUniformLocation[] = [];
 
-    private assets: GLTFImporter[] = [];
+    private model: Model;
     private rot = 0.0;
 
     private lastFrame = 0;
@@ -31,9 +31,7 @@ export class Engine {
     }
 
     public start(): void {
-        for (let i = 0; i < 10; i++) {
-            this.assets.push(new GLTFImporter('resources/tree.gltf'));
-        }
+        this.model = new Model('resources/dude.gltf');
 
         this.canvas = GLUtilities.initialize();
         this.camera = new Camera([3.0, 3.0, 6.0]);
@@ -54,20 +52,21 @@ export class Engine {
 
         const deltaTime = now - this.lastFrame;
         this.lastFrame = now;
-        console.log(deltaTime);
+        //console.log(deltaTime);
 
         this.shader.use();
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);
         const view = this.camera.getViewMatrix();
         let model = m4.identity();
-        model = m4.quatRotation(v3.normalize([1.0, 0.8, 0.0]), this.rot);
+        model = m4.scale(model, 0.5, 0.5, 0.5);
+        //model = m4.quatRotation(v3.normalize([1.0, 0.8, 0.0]), this.rot);
         this.rot = (this.rot + 1) % 360;
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
         gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
-        for (const asset of this.assets) {
-            if (asset.isReady()) asset.draw();
+        if (this.model.loaded) {
+            this.model.draw();
         }
         requestAnimationFrame(this.loop.bind( this ));
     }

@@ -16,11 +16,11 @@ const typeToCount: {[key: string]: number} = {
 export class GLTFImporter {
 
 
-    public static async loadModel(source: string): Promise<{scene: gltfStructure, buffers: ArrayBuffer[]}> {
+    public static async loadModel(source: string): Promise<{scene: gltfStructure, buffer: ArrayBuffer}> {
         const scene = await GLTFImporter.readJson(source);
-        const buffers = await this.loadBuffers(scene);
+        const buffer = await this.loadBuffers(scene);
 
-        return {scene, buffers};
+        return {scene, buffer};
     }
 
     private static async readJson(source: string): Promise<gltfStructure>{
@@ -28,8 +28,8 @@ export class GLTFImporter {
         const scene = resp.json();
         return scene;
     }
-/* 
 
+/* 
     private setGlBindings(): void {
         for (const mesh of this.structure.meshes) {
             for (const primitive of mesh.primitives) {
@@ -68,7 +68,7 @@ export class GLTFImporter {
         }
     } */
 
-    private static async loadBuffers(scene: gltfStructure): Promise<ArrayBuffer[]> {
+    private static async loadBuffers(scene: gltfStructure): Promise<ArrayBuffer> {
         const buffers: ArrayBuffer[] = [];
         for (const buffer of scene.buffers) {
             const newBuffer = new ArrayBuffer(buffer.byteLength);
@@ -81,14 +81,14 @@ export class GLTFImporter {
             
             if (buffer.uri.includes('.bin')) {
                 const newBuffer = await this.readBinary(buffer.uri);
-                console.log(newBuffer);
                 buffers.push(newBuffer);
             }
         }
-        return buffers;
+        // For now assuming only a single buffer is used per file
+        // maybe concatenate them if multiple in the future?
+        return buffers[0];
     }
 
-    // decoded data is little endian, so needs to be accounted for when changing from 8bit to 16bit
     private static decodeBase64(data: string, buffer: ArrayBuffer): void {
         const binaryString = atob(data);
         const bytes = new Uint8Array(buffer);
