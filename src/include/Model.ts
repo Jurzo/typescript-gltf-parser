@@ -16,6 +16,7 @@ export class Model {
 
     /** TODO:
      * Draw function takes into account node transformations
+     ** Maybe by setting separate uniforms in the shader for local transforms
      * Draw function takes in a reference to the shader that will be used for rendering
      */
     public draw(): void {
