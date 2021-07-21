@@ -16,6 +16,7 @@ export class Model {
 
     /** TODO:
      * Draw function takes into account node transformations
+     ** Need to somehow tie the primitive/mesh that is generated to a node to make use of node properties
      ** Maybe by setting separate uniforms in the shader for local transforms
      * Draw function takes in a reference to the shader that will be used for rendering
      */
