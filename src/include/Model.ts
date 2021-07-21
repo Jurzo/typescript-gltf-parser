@@ -14,6 +14,10 @@ export class Model {
 
     }
 
+    /** TODO:
+     * Draw function takes into account node transformations
+     * Draw function takes in a reference to the shader that will be used for rendering
+     */
     public draw(): void {
         for (const mesh of this.meshes) {
             mesh.draw();
