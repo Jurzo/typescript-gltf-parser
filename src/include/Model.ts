@@ -3,7 +3,7 @@ import { gltfStructure } from "./gltf";
 import { Mesh, VertexLayout } from "./Mesh";
 
 export class Model {
-    public meshes: Mesh[] = [];
+    public meshData: Mesh[][] = [];
     public loaded = false;
     private scene: gltfStructure;
     private buffer: ArrayBuffer;
@@ -14,17 +14,35 @@ export class Model {
 
     }
 
+    public draw(): void {
+        for (const node of this.scene.scenes[this.scene.scene].nodes) {
+            this.drawNode(node);
+        }
+    }
+
     /** TODO:
      * Draw function takes into account node transformations
      ** Need to somehow tie the primitive/mesh that is generated to a node to make use of node properties
-     ** Maybe by setting separate uniforms in the shader for local transforms
+     ** Should be done using a transformation matrix that is passed down the chain
+     ** Make sure to pass a copy and not reference to matrix
      * Draw function takes in a reference to the shader that will be used for rendering
      */
-    public draw(): void {
-        for (const mesh of this.meshes) {
-            mesh.draw();
+    private drawNode(node: number): void {
+        const meshId = this.scene.nodes[node].mesh;
+        if (meshId !== undefined) {
+            for (const mesh of this.meshData[meshId]) {
+                mesh.draw();
+            }
         }
+        const children = this.scene.nodes[node].children;
+        if (children !== undefined) {
+            for (const childNode of children) {
+                this.drawNode(childNode);
+            }
+        }
+
     }
+
 
     private async loadGLTF(source: string): Promise<void> {
         const asset = await GLTFImporter.loadModel(source);
@@ -34,6 +52,7 @@ export class Model {
         for (const node of this.scene.scenes[this.scene.scene].nodes) {
             this.processNode(node);
         }
+        console.log(this.meshData);
         this.loaded = true;
     }
     /**
@@ -45,9 +64,9 @@ export class Model {
     private processNode(node: number) {
 
         // process mesh in node if found
-        const mesh = this.scene.nodes[node].mesh;
-        if (mesh !== undefined) {
-            this.processMesh(mesh);
+        const meshId = this.scene.nodes[node].mesh;
+        if (meshId !== undefined) {
+            this.processMesh(meshId);
         }
         // process child nodes recursively
         const children = this.scene.nodes[node].children || undefined;
@@ -96,7 +115,8 @@ export class Model {
 
             const indexBuffer = this.buffer.slice(indexOffset, indexOffset+indexBV.byteLength);
 
-            this.meshes.push(new Mesh(vertexBuffer, indexBuffer, vertexLayout));
+            this.meshData[meshId] = [];
+            this.meshData[meshId].push(new Mesh(vertexBuffer, indexBuffer, vertexLayout));
         }
     }
 
