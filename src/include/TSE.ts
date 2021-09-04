@@ -66,7 +66,7 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
         gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
         if (this.model.loaded) {
-            this.model.draw();
+            this.model.draw(this.shader);
         }
         requestAnimationFrame(this.loop.bind( this ));
     }
@@ -81,12 +81,13 @@ export class Engine {
         out vec3 OurColor;
 
         uniform mat4 model;
+        uniform mat4 local;
         uniform mat4 view;
         uniform mat4 projection;
         uniform vec3 color;
 
         void main() {
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
+            gl_Position = projection * view * model * local * vec4(aPos, 1.0);
             OurColor = color;
         }`;
 

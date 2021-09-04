@@ -16,9 +16,9 @@ export interface gltfStructure {
         mesh?: number,
         camera?: number,
         skin?: number,
-        translation?: number[],
-        rotation?: number[],
-        scale?: number[],
+        translation?: [number, number, number],
+        rotation?: [number, number, number, number],
+        scale?: [number, number, number],
         matrix?: number[]
     }[],
 

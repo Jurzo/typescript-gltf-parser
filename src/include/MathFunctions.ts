@@ -8,6 +8,7 @@ export const m4 = {
             0, 0, 0, 1
         ];
     },
+
     // returns an orthographic projection matrix
     // with bounds within -1 <-> 1 and center at 0
     // and Z growing towards the front
@@ -55,8 +56,12 @@ export const m4 = {
         return m4.multiply(mat4, m4.translation(tx, ty, tz));
     },
 
-    rotate: function(mat4: number[], angleDeg: number, rotAxis: number[]): number[] {
-        return m4.multiply(mat4, m4.quatRotation(rotAxis, angleDeg));
+    rotateByAngle: function(mat4: number[], angleDeg: number, rotAxis: number[]): number[] {
+        return m4.multiply(mat4, m4.quatRotationByAngle(rotAxis, angleDeg));
+    },
+
+    rotate: function(mat4: number[], quat:[number, number, number, number]): number[] {
+        return m4.multiply(mat4, m4.quatRotation(quat));
     },
 
     scale: function(mat4: number[], sx: number, sy: number, sz: number): number[] {
@@ -81,7 +86,7 @@ export const m4 = {
         ];
     },
 
-    quatRotation: function(axis: number[], angle: number): number[] {
+    quatRotationByAngle: function(axis: number[], angle: number): number[] {
         const rad = angle / 180 * Math.PI;
         const halfSin = Math.sin(rad / 2);
         const halfCos = Math.cos(rad / 2);
@@ -97,6 +102,13 @@ export const m4 = {
         const qy = y*n;
         const qz = z*n;
         const qw = w*n;
+
+        return  m4.quatRotation([qx, qy, qz, qw]);
+    },
+
+    quatRotation: function(quat: [number, number, number, number]): number[] {
+
+        const [qx, qy, qz, qw] = quat;
 
         return [
             1.0 - 2.0*qy*qy - 2.0*qz*qz, 2.0*qx*qy - 2.0*qz*qw, 2.0*qx*qz + 2.0*qy*qw, 0.0,

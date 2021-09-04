@@ -1,6 +1,8 @@
 import { GLTFImporter } from "./GLTFImporter";
 import { gltfStructure } from "./gltf";
 import { Mesh, VertexLayout } from "./Mesh";
+import { m4 } from "./MathFunctions";
+import { Shader } from "./Shader";
 
 export class Model {
     public meshData: Mesh[][] = [];
@@ -10,39 +12,50 @@ export class Model {
 
     constructor(source: string) {
         this.loadGLTF(source);
-
-
     }
 
-    public draw(): void {
+    public draw(shader: Shader): void {
         for (const node of this.scene.scenes[this.scene.scene].nodes) {
-            this.drawNode(node);
+            this.drawNode(node, shader, m4.identity());
         }
     }
 
     /** TODO:
-     * Draw function takes into account node transformations
-     ** Need to somehow tie the primitive/mesh that is generated to a node to make use of node properties
-     ** Should be done using a transformation matrix that is passed down the chain
-     ** Make sure to pass a copy and not reference to matrix
-     * Draw function takes in a reference to the shader that will be used for rendering
+     * Solution seems really inelegant right now in terms of passing
+     * the shader to the draw function.
      */
-    private drawNode(node: number): void {
-        const meshId = this.scene.nodes[node].mesh;
+    private drawNode(nodeId: number, shader: Shader, parentTransform: number[]): void {
+        const node = this.scene.nodes[nodeId];
+        const meshId = node.mesh;
+        // local transformation matrix
+        let localTransform = node.matrix || [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1    
+        ];
+        const translation = node.translation || [0, 0, 0];
+        const rotation= node.rotation || [0, 0, 0, 0];
+        const scale = node.scale || [1, 1, 1];
+
+        localTransform = m4.translate(localTransform, ...translation);
+        localTransform = m4.rotate(localTransform, rotation);
+        localTransform = m4.scale(localTransform, ...scale);
+
+        const transform = m4.multiply(parentTransform, localTransform);
+
         if (meshId !== undefined) {
             for (const mesh of this.meshData[meshId]) {
-                mesh.draw();
+                mesh.draw(shader, localTransform);
             }
         }
-        const children = this.scene.nodes[node].children;
+        const children = node.children;
         if (children !== undefined) {
             for (const childNode of children) {
-                this.drawNode(childNode);
+                this.drawNode(childNode, shader, transform);
             }
         }
-
     }
-
 
     private async loadGLTF(source: string): Promise<void> {
         const asset = await GLTFImporter.loadModel(source);
@@ -52,7 +65,6 @@ export class Model {
         for (const node of this.scene.scenes[this.scene.scene].nodes) {
             this.processNode(node);
         }
-        console.log(this.meshData);
         this.loaded = true;
     }
     /**

@@ -1,4 +1,5 @@
 import { gl } from './GL';
+import { Shader } from './Shader';
 
 export interface Texture {
     id: number,
@@ -29,7 +30,8 @@ export class Mesh {
         this.setupMesh();
     }
 
-    public draw(): void {
+    public draw(shader: Shader, localMatrix: number[]): void {
+        gl.uniformMatrix4fv(gl.getUniformLocation(shader.getProgram(), 'local'), false, localMatrix);
         gl.bindVertexArray(this.VAO);
         gl.drawElements(gl.TRIANGLES, this.indices.byteLength / 2, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(undefined);
@@ -39,7 +41,6 @@ export class Mesh {
         this.VAO = gl.createVertexArray();
         this.VBO = gl.createBuffer();
         this.EBO = gl.createBuffer();
-        console.log(this.vertexLayout);
 
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VBO);
