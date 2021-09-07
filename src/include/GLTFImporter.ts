@@ -1,21 +1,12 @@
-import { gltfStructure } from "./gltf";
-
-const typeToCount: {[key: string]: number} = {
-    'SCALAR': 1,
-    'VEC2': 2,
-    'VEC3': 3,
-    'VEC4': 4,
-    'MAT3': 9,
-    'MAT4': 16
-};
-
-/**
- * Change this class to gltfLoader and make it return a model-mesh object like in cpp project
- */
+import { gltfStructure } from "./util/gltf";
 
 export class GLTFImporter {
 
-
+    /**
+     * 
+     * @param source - The model file location as a string
+     * @returns An object containing the parsed gltf scene structure and the buffer containing the model data
+     */
     public static async loadModel(source: string): Promise<{scene: gltfStructure, buffer: ArrayBuffer}> {
         const scene = await GLTFImporter.readJson(source);
         const buffer = await this.loadBuffers(scene);
@@ -28,45 +19,6 @@ export class GLTFImporter {
         const scene = resp.json();
         return scene;
     }
-
-/* 
-    private setGlBindings(): void {
-        for (const mesh of this.structure.meshes) {
-            for (const primitive of mesh.primitives) {
-                const positionAccessor = this.structure.accessors[primitive.attributes.POSITION];
-                const normalAccessor = this.structure.accessors[primitive.attributes.NORMAL];
-                const texAccessor = this.structure.accessors[primitive.attributes.TEXCOORD_0];
-                const indexAccessor = this.structure.accessors[primitive.indices];
-                const buffer = this.buffers[this.structure.bufferViews[positionAccessor.bufferView].buffer];
-
-                const VAO = gl.createVertexArray();
-                const VBO = gl.createBuffer();
-                const EBO = gl.createBuffer();
-
-                gl.bindVertexArray(VAO);
-                gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-                gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.STATIC_DRAW);
-
-                const indexByteOffset = this.structure.bufferViews[indexAccessor.bufferView].byteOffset + (indexAccessor.byteOffset || 0);
-                const indexBuffer = new Uint16Array(buffer, indexByteOffset, indexAccessor.count);
-
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
-
-                gl.enableVertexAttribArray(0);
-                gl.vertexAttribPointer(0, 3, positionAccessor.componentType, false, 0, this.structure.bufferViews[positionAccessor.bufferView].byteOffset);
-
-                gl.enableVertexAttribArray(1);
-                gl.vertexAttribPointer(1, 3, normalAccessor.componentType, false, 0, this.structure.bufferViews[normalAccessor.bufferView].byteOffset);
-
-                gl.enableVertexAttribArray(1);
-                gl.vertexAttribPointer(1, 2, texAccessor.componentType, false, 0, this.structure.bufferViews[texAccessor.bufferView].byteOffset);
-
-                gl.bindVertexArray(undefined);
-                primitive.VAO = VAO;
-            }
-        }
-    } */
 
     private static async loadBuffers(scene: gltfStructure): Promise<ArrayBuffer> {
         const buffers: ArrayBuffer[] = [];

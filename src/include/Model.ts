@@ -1,7 +1,7 @@
 import { GLTFImporter } from "./GLTFImporter";
-import { gltfStructure } from "./gltf";
+import { gltfStructure } from "./util/gltf";
 import { Mesh, VertexLayout } from "./Mesh";
-import { m4 } from "./MathFunctions";
+import { m4 } from "./util/math";
 import { Shader } from "./Shader";
 
 export class Model {
@@ -34,7 +34,7 @@ export class Model {
             0, 0, 1, 0,
             0, 0, 0, 1    
         ];
-        const translation = node.translation || [0, 0, 0];
+        const translation = node.translation || [0, 0, -1];
         const rotation= node.rotation || [0, 0, 0, 0];
         const scale = node.scale || [1, 1, 1];
 

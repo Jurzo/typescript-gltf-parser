@@ -1,6 +1,6 @@
 import { GLUtilities, gl } from './GL';
 import { Shader } from './Shader';
-import { m4, v3 } from './MathFunctions';
+import { m4, v3 } from './util/math';
 import { Camera } from './Camera';
 import { Model } from './Model';
 
@@ -34,7 +34,7 @@ export class Engine {
         this.model = new Model('resources/dude.gltf');
 
         this.canvas = GLUtilities.initialize();
-        this.camera = new Camera([3.0, 3.0, 6.0]);
+        this.camera = new Camera([0, 3, 3]);
         this.camera.setTarget([0, 0, 0]);
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0,0,0,1);
@@ -58,8 +58,9 @@ export class Engine {
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);
         const view = this.camera.getViewMatrix();
         let model = m4.identity();
-        model = m4.scale(model, 0.5, 0.5, 0.5);
-        //model = m4.quatRotation(v3.normalize([1.0, 0.8, 0.0]), this.rot);
+        model = m4.scale(model, 1.3, 1.3, 1.3);
+        model = m4.translate(model, 0, -1, 0);
+        m4.rotateByAngle(model, this.rot, v3.normalize([0, 1, 0]));
         this.rot = (this.rot + 1) % 360;
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
