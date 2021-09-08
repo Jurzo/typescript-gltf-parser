@@ -1,8 +1,8 @@
-import { GLUtilities, gl } from './GL';
+import { GLUtilities, gl } from './util/GL';
 import { Shader } from './Shader';
 import { m4, v3 } from './util/math';
 import { Camera } from './Camera';
-import { Model } from './Model';
+import { Model } from '../Model/Model';
 
 export class Engine {
     private canvas: HTMLCanvasElement | null;

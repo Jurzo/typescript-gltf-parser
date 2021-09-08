@@ -1,4 +1,4 @@
-import { gltfStructure } from "./util/gltf";
+import { gltfStructure } from "./gltf";
 
 export class GLTFImporter {
 

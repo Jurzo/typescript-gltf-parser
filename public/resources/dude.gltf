@@ -8,7 +8,7 @@
         {
             "name" : "Scene",
             "nodes" : [
-                35
+                34
             ]
         }
     ],
@@ -696,13 +696,15 @@
             ]
         },
         {
+            "children" : [
+                35
+            ],
             "mesh" : 0,
             "name" : "Human_Cylinder.002",
             "skin" : 0
         },
         {
             "children" : [
-                34,
                 29,
                 31,
                 33
