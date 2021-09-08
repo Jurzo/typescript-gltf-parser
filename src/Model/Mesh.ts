@@ -1,5 +1,5 @@
 import { gl } from '../include/util/GL';
-import { Shader } from '../include/Shader';
+import { Shader } from '../include/TSE/Shader';
 
 export interface Texture {
     id: number,

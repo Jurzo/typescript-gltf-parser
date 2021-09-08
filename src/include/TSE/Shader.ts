@@ -1,4 +1,4 @@
-import { gl } from "./util/GL";
+import { gl } from "../util/GL";
 
 export class Shader {
     private name: string;

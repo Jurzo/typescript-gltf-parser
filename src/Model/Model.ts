@@ -2,7 +2,7 @@ import { GLTFImporter } from "../include/util/GLTFImporter";
 import { gltfStructure } from "../include/util/gltf";
 import { Mesh, VertexLayout } from "./Mesh";
 import { m4 } from "../include/util/math";
-import { Shader } from "../include/Shader";
+import { Shader } from "../include/TSE/Shader";
 
 export class Model {
     public meshData: Mesh[][] = [];
