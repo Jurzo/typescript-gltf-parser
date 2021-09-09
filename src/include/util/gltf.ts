@@ -11,7 +11,7 @@ export interface gltfStructure {
     }[],
 
     nodes: {
-        name: string,
+        name?: string,
         children?: number[],
         mesh?: number,
         camera?: number,
@@ -79,8 +79,8 @@ export interface gltfStructure {
             attributes: {
                 POSITION: number,
                 NORMAL: number,
-                JOINTS_0: number,
-                WEIGHTS_0: number,
+                JOINTS_0?: number,
+                WEIGHTS_0?: number,
                 TEXCOORD_0?: number,
                 TEXCOORD_1?: number,
                 TEXCOORD_2?: number,
