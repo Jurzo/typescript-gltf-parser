@@ -3,7 +3,7 @@ import { Skin } from "./Skin";
 
 export interface AiNode {
     name?: string;
-    children?: number[];
+    children?: AiNode[];
     matrix?: number[];
     translation?: [number, number, number];
     rotation?: [number, number, number, number];

@@ -1,4 +1,5 @@
-import { Scene, checkLoaded } from "../Scene/Scene";
+import { GLTFImporter } from "../Scene/GLTFImporter";
+import { Scene } from "../Scene/Scene";
 import { gl, GLUtilities } from "../util/GL";
 import { m4 } from "../util/math";
 import { Camera } from "./Camera";
@@ -29,9 +30,11 @@ export class Engine {
     }
 
     public start(): void {
-
         this.canvas = GLUtilities.initialize();
-        this.camera = new Camera([0, 3, 3]);
+        this.scene = new Scene();
+        const importer = new GLTFImporter();
+        importer.importModel(this.scene, 'resources/dude.gltf').then(this.scene.setLoaded);
+        this.camera = new Camera([0, 5, 5]);
         this.camera.setTarget([0, 0, 0]);
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0,0,0,1);
@@ -39,7 +42,6 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'model'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'view'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
-        this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'color'));
         this.resize();
         this.loop(0);
     }
@@ -58,9 +60,8 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
-        gl.uniform3fv(this.uniformLocations[3], [(Math.sin(now/1000)+1) / 2, (Math.cos(now/1000)+1) / 2, 1.0]);
-        if (checkLoaded(this.scene)) {
-            // render
+        if (this.scene.checkLoaded()) {
+            this.scene.draw(this.shader);
         }
         requestAnimationFrame(this.loop.bind( this ));
     }
@@ -72,17 +73,13 @@ export class Engine {
         layout (location = 1) in vec3 aNormal;
         layout (location = 2) in vec3 aTexCoord;
 
-        out vec3 OurColor;
-
         uniform mat4 model;
         uniform mat4 local;
         uniform mat4 view;
         uniform mat4 projection;
-        uniform vec3 color;
 
         void main() {
             gl_Position = projection * view * model * local * vec4(aPos, 1.0);
-            OurColor = color;
         }`;
 
         const fragmentShaderSource = 
@@ -90,10 +87,9 @@ export class Engine {
         precision highp float;
         out vec4 fragColor;
 
-        in vec3 OurColor;
 
         void main() {
-            fragColor = vec4(OurColor, 1.0);    
+            fragColor = vec4(1.0);    
         }`;
 
         this.shader = new Shader("basic", vertexShaderSource, fragmentShaderSource);
