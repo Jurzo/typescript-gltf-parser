@@ -1,5 +1,4 @@
 import { Mesh } from "./Mesh";
-import { Skin } from "./Skin";
 
 export interface AiNode {
     name?: string;
@@ -9,5 +8,9 @@ export interface AiNode {
     rotation?: [number, number, number, number];
     scale?: [number, number, number];
     mesh?: Mesh;
-    skin?: Skin;
+    skin?: {
+        name: string;
+        joints: number[];
+        inverseBindMatrices: ArrayBuffer;
+    }
 }

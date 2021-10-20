@@ -4,14 +4,49 @@ import { m4 } from "../util/math";
 import { AiNode } from "./AiNode";
 import { Mesh } from "./Mesh";
 
-export interface Asset {
-    root: AiNode;
-    // Maybe don't need these buffers after implementing skinning and animations
-    buffers: ArrayBuffer[];
-    animations?: Animation[];
+export class Asset {
+    private roots: AiNode[];
+    private animations: Animation[] = null;
+
+    constructor(roots: AiNode[]) {
+        this.roots = roots;
+    }
+
+    public render(): void {
+        for (const root of this.roots) {
+            this.renderNode(root);
+        }
+    }
+
+    public addAnimation(animation: Animation): void {
+        if (!this.animations) this.animations = [];
+        this.animations.push(animation);
+    }
+
+    private renderNode(node: AiNode): void {
+        const children = node.children || null;
+        const mesh = node.mesh || null;
+        const skin = node.skin || null;
+
+        mesh && this.drawMesh(mesh);
+
+        if (children)  {
+            for (const childNode of children) {
+                this.renderNode(childNode);
+            }
+        }
+    }
+
+    private drawMesh(mesh: Mesh): void {
+        mesh.primitives.forEach(primitive => {
+            gl.bindVertexArray(primitive.VAO);
+            gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
+            gl.bindVertexArray(undefined);
+        });
+    }
 }
 
-export class Scene {
+/* export class Scene {
     private assets: Asset[] = [];
     private isLoaded = false;
     // Add shaders to scene or to engine?
@@ -65,4 +100,4 @@ export class Scene {
             gl.bindVertexArray(undefined);
         });
     }
-}
+} */

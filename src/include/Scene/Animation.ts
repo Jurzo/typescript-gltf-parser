@@ -7,11 +7,12 @@ interface Sampler {
 
 interface AnimChannel {
     target: number;
-    property: string;
-    sampler: number;
+    property: "translation" | "rotation" | "scale";
 }
 
 export interface Animation {
     channels: AnimChannel[];
     samplers: Sampler[];
+    min: number;
+    max: number;
 }

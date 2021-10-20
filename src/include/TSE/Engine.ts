@@ -1,5 +1,5 @@
 import { GLTFImporter } from "../Scene/GLTFImporter";
-import { Scene } from "../Scene/Scene";
+import { Asset } from "../Scene/Asset";
 import { gl, GLUtilities } from "../util/GL";
 import { m4 } from "../util/math";
 import { Camera } from "./Camera";
@@ -10,12 +10,13 @@ export class Engine {
     private shader: Shader;
     private camera: Camera;
     private uniformLocations: WebGLUniformLocation[] = [];
-    private scene: Scene;
+    private asset: Asset;
 
     private lastFrame = 0;
 
     public constructor() {
         this.canvas = null;
+        this.asset = null;
     }
 
     public resize(): void {
@@ -31,9 +32,9 @@ export class Engine {
 
     public start(): void {
         this.canvas = GLUtilities.initialize();
-        this.scene = new Scene();
         const importer = new GLTFImporter();
-        importer.importModel(this.scene, 'resources/dude.gltf').then(this.scene.setLoaded);
+        importer.importModel('resources/dude.gltf')
+            .then(asset => this.asset = asset);
         this.camera = new Camera([0, 5, 5]);
         this.camera.setTarget([0, 0, 0]);
         gl.enable(gl.DEPTH_TEST);
@@ -60,9 +61,7 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
-        if (this.scene.checkLoaded()) {
-            this.scene.draw(this.shader);
-        }
+        if (this.asset) this.asset.render();
         requestAnimationFrame(this.loop.bind( this ));
     }
 
@@ -79,7 +78,7 @@ export class Engine {
         uniform mat4 projection;
 
         void main() {
-            gl_Position = projection * view * model * local * vec4(aPos, 1.0);
+            gl_Position = projection * view * model * vec4(aPos, 1.0);
         }`;
 
         const fragmentShaderSource = 

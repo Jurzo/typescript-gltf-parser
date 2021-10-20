@@ -155,7 +155,7 @@ export interface gltfStructure {
     skins?: {
         name?: string,
         inverseBindMatrices: number,
-        joints?: number[]
+        joints: number[]
     }[],
 
     animations?: {

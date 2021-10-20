@@ -2,7 +2,7 @@ import { Mesh } from "./Mesh";
 import { gltfStructure } from "../util/gltf";
 import { AiNode } from "./AiNode";
 import { loadModel } from "./GLTFLoader";
-import { Asset, Scene } from "./Scene";
+import { Asset } from "./Asset";
 import { gl } from "../util/GL";
 
 export class GLTFImporter {
@@ -15,22 +15,17 @@ export class GLTFImporter {
      * @param URI 
      * @returns - a promise with the value true when the asset is loaded and added to the scene object
      */
-    public async importModel(scene: Scene, URI: string): Promise<boolean> {
+    public async importModel(URI: string): Promise<Asset> {
         const data = await loadModel(URI);
         this.gltf = data.gltf;
         this.buffers = data.buffers;
 
         // Expecting only a single scene per file for now
-        const root = this.gltf.scenes[0].nodes[0];
+        const roots = this.gltf.scenes[0].nodes;
 
-        const asset: Asset = {
-            root: this.parseNode(root),
-            buffers: this.buffers
-        };
+        const asset = new Asset(roots.map(root => this.parseNode(root)));
 
-        scene.addAsset(asset);
-
-        return true;
+        return asset;
     }
 
     private parseNode(nodeID: number): AiNode {
@@ -59,7 +54,7 @@ export class GLTFImporter {
             ...(rotation !== undefined) && { rotation: rotation },
             ...(scale !== undefined) && { scale: scale },
             ...(meshID !== undefined) && { mesh: this.parseMesh(meshID) },
-            //...(skinID !== undefined) && { name: this.parseSkin(skinID) }
+            ...(skinID !== undefined) && { skin: this.parseSkin(skinID) }
         }
         return aiNode;
     }
@@ -82,9 +77,10 @@ export class GLTFImporter {
 
             // get buffers, byteOffsets and byteStrides
             const vertexData = attributeAccessors.map(accessor => {
-                if (!accessor) return undefined;
+                if (!accessor) return null;
                 const bufferView = this.gltf.bufferViews[accessor.bufferView];
                 const index = bufferView.buffer;
+                // TODO: get accessor data from gltf buffer and slice it to create a new buffer just for the accessor ??
                 const buffer = this.buffers[index];
                 const byteOffset = bufferView.byteOffset + (accessor.byteOffset || 0);
                 const byteStride = bufferView.byteStride || 0;
@@ -115,9 +111,62 @@ export class GLTFImporter {
         return { primitives };
     }
 
-    /*  private parseSkin(skinID: number): Skin {
- 
-     } */
+    private parseSkin(skinID: number): AiNode['skin'] {
+        const skinNode = this.gltf.skins[skinID];
+        const accessor = this.gltf.accessors[skinNode.inverseBindMatrices];
+        const bufferView = this.gltf.bufferViews[accessor.bufferView];
+        const byteOffset = bufferView.byteOffset + (accessor.byteOffset || 0);
+        const byteStride = bufferView.byteStride || 0;
+        const count = accessor.count;
+        const type = accessor.type;
+        const compType = accessor.componentType;
+        const ivbBuffer = readBuffer(
+            this.buffers[bufferView.buffer],
+            type,
+            compType,
+            count,
+            byteOffset,
+            byteStride
+            )
+        const skin = {
+            name: skinNode.name || 'undefined',
+            joints: skinNode.joints,
+            inverseBindMatrices: ivbBuffer
+        }
+        return skin;
+    }
+}
+
+const readBuffer = (
+    buffer: ArrayBuffer,
+    type: string,
+    componentType: number,
+    elementCount: number,
+    offset: number,
+    stride: number,
+    ): ArrayBuffer => {
+        const elementSize = typeToCount[type];
+        const elementByteSize = componentByteSize(componentType);
+        const count = elementCount * elementSize;
+        let newBuffer: Uint8Array | Uint16Array | Uint32Array;
+        let dataView: Uint8Array | Uint16Array | Uint32Array;
+        if (elementByteSize === 1) {
+            newBuffer = new Uint8Array(elementByteSize * elementCount);
+            dataView = new Uint8Array(buffer);
+        } else if (elementByteSize === 2) {
+            newBuffer = new Uint16Array(elementByteSize * elementCount);
+            dataView = new Uint16Array(buffer);
+        } else {
+            newBuffer = new Uint32Array(elementByteSize * elementCount);
+            dataView = new Uint32Array(buffer);
+        }
+        for (let i = 0; i < count; i+= elementSize) {
+            const index = offset + (stride === 0 ? i : i*stride);
+            for (let j = 0; j < elementSize; j++) {
+                newBuffer[i] = dataView[index+j];
+            }
+        }
+        return newBuffer.buffer;
 }
 
 const generateVAO = (
@@ -170,4 +219,12 @@ const typeToCount: { [key: string]: number } = {
     VEC3: 3,
     VEC4: 4,
     MAT4: 16
+}
+
+const componentByteSize = (type: number): number => {
+    if (type === gl.UNSIGNED_BYTE) return 1;
+    if (type === gl.UNSIGNED_SHORT) return 2;
+    if (type === gl.FLOAT) return 4;
+    if (type === gl.INT) return 4;
+    return -1;
 }

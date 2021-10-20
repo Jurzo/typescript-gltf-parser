@@ -18,7 +18,7 @@ Can contain a
 - Vertex data
 - Possibly material
 
-## Skeleton
+## Skin
 - Consists of joints
 - Inverse bind matrix for each joint in the order they are listed in joints
 - Generate joint matrices by looping through the joints list and getting node's current transform
