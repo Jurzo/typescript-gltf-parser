@@ -19,7 +19,7 @@ export interface gltfStructure {
         translation?: [number, number, number],
         rotation?: [number, number, number, number],
         scale?: [number, number, number],
-        matrix?: number[]
+        matrix?: number[],
     }[],
 
     cameras?: {

@@ -1,6 +1,6 @@
 import { Mesh } from "./Mesh";
 import { gltfStructure } from "../util/gltf";
-import { AiNode } from "./AiNode";
+import { AiNode, Skin } from "./AiNode";
 import { loadModel } from "./GLTFLoader";
 import { Asset } from "./Asset";
 import { gl } from "../util/GL";
@@ -8,6 +8,8 @@ import { gl } from "../util/GL";
 export class GLTFImporter {
     private gltf: gltfStructure;
     private buffers: ArrayBuffer[];
+
+    private skins: Skin[];
 
     /**
      * 
@@ -20,12 +22,13 @@ export class GLTFImporter {
         this.gltf = data.gltf;
         this.buffers = data.buffers;
 
-        // Expecting only a single scene per file for now
         const roots = this.gltf.scenes[0].nodes;
-
-        const asset = new Asset(roots.map(root => this.parseNode(root)));
-
-        return asset;
+        this.skins = [];
+        const nodes: AiNode[] = [];
+        for (let i = 0; i < this.gltf.nodes.length; i++) {
+            nodes.push(this.parseNode(i));
+        }
+        return new Asset(roots, nodes, this.skins);
     }
 
     private parseNode(nodeID: number): AiNode {
@@ -39,16 +42,10 @@ export class GLTFImporter {
         const rotation = currentNode.rotation;
         const scale = currentNode.scale;
 
-        let children: AiNode[] | undefined = undefined;
-
-        if (childIDs !== undefined) {
-            children = childIDs.map(id => this.parseNode(id));
-        }
-
         // do stuff if node properties are not undefined
         const aiNode: AiNode = {
             ...(name !== undefined) && { name: name },
-            ...(children !== undefined) && { children: children },
+            ...(childIDs !== undefined) && { children: childIDs },
             ...(matrix !== undefined) && { matrix: matrix },
             ...(translation !== undefined) && { translation: translation },
             ...(rotation !== undefined) && { rotation: rotation },
@@ -75,37 +72,51 @@ export class GLTFImporter {
                 ...(weightsAccessorID !== undefined ? [this.gltf.accessors[weightsAccessorID]] : [])
             ];
 
-            // get buffers, byteOffsets and byteStrides
+            // get buffers, byteOffsets and byteStrides for vertex attributes
             const vertexData = attributeAccessors.map(accessor => {
-                if (!accessor) return null;
+                if (!accessor) return null; // why was this here?
                 const bufferView = this.gltf.bufferViews[accessor.bufferView];
-                const index = bufferView.buffer;
-                // TODO: get accessor data from gltf buffer and slice it to create a new buffer just for the accessor ??
-                const buffer = this.buffers[index];
+                const bufferIndex = bufferView.buffer;
                 const byteOffset = bufferView.byteOffset + (accessor.byteOffset || 0);
                 const byteStride = bufferView.byteStride || 0;
                 const componentType = accessor.componentType;
                 const type = accessor.type;
+                const count = accessor.count;
+                const buffer = readBuffer(
+                    this.buffers[bufferIndex],
+                    type,
+                    componentType,
+                    count,
+                    byteOffset,
+                    byteStride
+                    );
 
                 return {
-                    index,
                     buffer,
-                    byteOffset,
-                    byteStride,
                     componentType,
                     type
                 };
             });
 
-            const indexAccessor = this.gltf.accessors[primitive.indices];
-            const indexBufferView = this.gltf.bufferViews[indexAccessor.bufferView];
-            const indexByteOffset = indexBufferView.byteOffset + (indexAccessor.byteOffset || 0);
+            // Index
+            const accessor = this.gltf.accessors[primitive.indices];
+            const bufferView = this.gltf.bufferViews[accessor.bufferView];
+            const bufferIndex = bufferView.buffer;
+            const byteOffset = bufferView.byteOffset + (accessor.byteOffset || 0);
+            const byteStride = bufferView.byteStride || 0;
             // for now parsing as if index won't have byte stride
-            const indexBuffer = this.buffers[indexBufferView.buffer].slice(indexByteOffset, indexByteOffset + indexBufferView.byteLength);
+            const indexBuffer = readBuffer(
+                this.buffers[bufferIndex],
+                accessor.type,
+                accessor.componentType,
+                accessor.count,
+                byteOffset,
+                byteStride
+                );
 
             const VAO = generateVAO(vertexData, indexBuffer);
 
-            return { VAO, elementCount: indexAccessor.count };
+            return { VAO, elementCount: accessor.count };
         });
 
         return { primitives };
@@ -127,13 +138,14 @@ export class GLTFImporter {
             count,
             byteOffset,
             byteStride
-            )
+        )
         const skin = {
             name: skinNode.name || 'undefined',
             joints: skinNode.joints,
             inverseBindMatrices: ivbBuffer
         }
-        return skin;
+        this.skins.push(skin);
+        return this.skins.length - 1;
     }
 }
 
@@ -144,37 +156,34 @@ const readBuffer = (
     elementCount: number,
     offset: number,
     stride: number,
-    ): ArrayBuffer => {
-        const elementSize = typeToCount[type];
-        const elementByteSize = componentByteSize(componentType);
-        const count = elementCount * elementSize;
-        let newBuffer: Uint8Array | Uint16Array | Uint32Array;
-        let dataView: Uint8Array | Uint16Array | Uint32Array;
-        if (elementByteSize === 1) {
-            newBuffer = new Uint8Array(elementByteSize * elementCount);
-            dataView = new Uint8Array(buffer);
-        } else if (elementByteSize === 2) {
-            newBuffer = new Uint16Array(elementByteSize * elementCount);
-            dataView = new Uint16Array(buffer);
-        } else {
-            newBuffer = new Uint32Array(elementByteSize * elementCount);
-            dataView = new Uint32Array(buffer);
+): ArrayBuffer => {
+    const elementSize = typeToCount[type];
+    const elementByteSize = componentByteSize(componentType);
+    const count = elementCount * elementSize;
+    let newBuffer: Uint8Array | Uint16Array | Uint32Array;
+    let dataView: Uint8Array | Uint16Array | Uint32Array;
+    if (elementByteSize === 1) {
+        newBuffer = new Uint8Array(count);
+        dataView = new Uint8Array(buffer);
+    } else if (elementByteSize === 2) {
+        newBuffer = new Uint16Array(count);
+        dataView = new Uint16Array(buffer);
+    } else {
+        newBuffer = new Uint32Array(count);
+        dataView = new Uint32Array(buffer);
+    }
+    for (let i = 0; i < count; i += elementSize) {
+        const index = offset / elementByteSize + (stride === 0 ? i : i * stride);
+        for (let j = 0; j < elementSize; j++) {
+            newBuffer[i + j] = dataView[index + j];
         }
-        for (let i = 0; i < count; i+= elementSize) {
-            const index = offset + (stride === 0 ? i : i*stride);
-            for (let j = 0; j < elementSize; j++) {
-                newBuffer[i] = dataView[index+j];
-            }
-        }
-        return newBuffer.buffer;
+    }
+    return newBuffer.buffer;
 }
 
 const generateVAO = (
     vertexData: {
-        index: number,
         buffer: ArrayBuffer,
-        byteOffset: number,
-        byteStride: number,
         componentType: number,
         type: string
     }[],
@@ -183,33 +192,24 @@ const generateVAO = (
     const VAO = gl.createVertexArray();
     const EBO = gl.createBuffer();
 
-    // janky solution for preventing binding the same buffer multiple times
-    const previousBuffers: number[] = [];
     gl.bindVertexArray(VAO);
 
-    let VBO = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-
-    vertexData.forEach((data, i) => {
-        if (!previousBuffers.includes(data.index)) {
-            VBO = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-            previousBuffers.push(data.index);
-        }
+    vertexData.forEach((attribute, i) => {
+        const VBO = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
         gl.enableVertexAttribArray(i);
-        gl.bufferData(gl.ARRAY_BUFFER, data.buffer, gl.STATIC_DRAW);
-        if (data.componentType === gl.UNSIGNED_BYTE) {
-            gl.vertexAttribIPointer(i, typeToCount[data.type], data.componentType, data.byteStride, data.byteOffset);
-        } else {
-            gl.vertexAttribPointer(i, typeToCount[data.type], data.componentType, false, data.byteStride, data.byteOffset);
-        }
+        gl.bufferData(gl.ARRAY_BUFFER, attribute.buffer, gl.STATIC_DRAW);
+        if (attribute.componentType === gl.UNSIGNED_BYTE)
+            gl.vertexAttribIPointer(i, typeToCount[attribute.type], attribute.componentType, 0, 0);
+        else
+            gl.vertexAttribPointer(i, typeToCount[attribute.type], attribute.componentType, false, 0, 0);
+
     });
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
 
     gl.bindVertexArray(undefined);
-
     return VAO;
 }
 

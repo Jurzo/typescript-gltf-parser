@@ -32,17 +32,27 @@ export class Engine {
 
     public start(): void {
         this.canvas = GLUtilities.initialize();
-        const importer = new GLTFImporter();
-        importer.importModel('resources/dude.gltf')
-            .then(asset => this.asset = asset);
         this.camera = new Camera([0, 5, 5]);
         this.camera.setTarget([0, 0, 0]);
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0,0,0,1);
+
         this.loadShaders();
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'model'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'view'));
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
+
+        const importer = new GLTFImporter();
+        importer.importModel('resources/3-bones.gltf')
+            .then(asset => {
+                this.asset = asset;
+                this.asset.setShader(this.shader);
+                /* this.asset.scale = 0.5;
+                this.asset.rotation = {axis: [0, 1, 0], angle: 75}; */
+                this.asset.calculateLocals();
+                this.asset.jointMatrices();
+            });
+
         this.resize();
         this.loop(0);
     }
@@ -57,6 +67,7 @@ export class Engine {
         this.shader.use();
         const projection = m4.perspective(this.camera.Zoom, this.canvas.width / this.canvas.height, 0.1, 100.0);
         const view = this.camera.getViewMatrix();
+        //const model = m4.scale(m4.identity(), 0.5, 0.1, 0.5);
         const model = m4.identity();
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
