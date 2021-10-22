@@ -1,7 +1,7 @@
 import { GLTFImporter } from "../Asset/GLTFImporter";
 import { Asset } from "../Asset/Asset";
 import { gl, GLUtilities } from "../util/GL";
-import { m4 } from "../util/math";
+import { m4 } from "../util/Math";
 import { Camera } from "./Camera";
 import { Shader } from "./Shader";
 

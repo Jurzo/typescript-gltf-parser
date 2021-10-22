@@ -282,5 +282,32 @@ export const v3 = {
             return [v[0] / len, v[1] / len, v[2] / len];
         }
         return [0, 0, 0];
+    },
+
+    dot: function(v1: number[], v2: number[]): number {
+        return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+    }
+}
+
+export const v4 = {
+    subtract: function(v1: number[], v2: number[]): number[] {
+        return [v1[0]-v2[0], v1[1]-v2[1], v1[2]-v2[2], v1[3]-v2[3]];
+    },
+
+    add: function(v1: number[], v2: number[]): number[] {
+        return [v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2], v1[3]+v2[3]];
+    },
+
+    normalize: function(v: number[]): number[] {
+        const len = Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+
+        if (len > 0.000001) {
+            return [v[0] / len, v[1] / len, v[2] / len, v[3] / len];
+        }
+        return [0, 0, 0, 0];
+    },
+
+    dot: function(v1: number[], v2: number[]): number {
+        return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2] + v1[3] * v2[3];
     }
 }
