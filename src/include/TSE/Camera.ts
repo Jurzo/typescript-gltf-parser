@@ -1,4 +1,4 @@
-import { m4, v3 } from '../util/math';
+import { m4, v3 } from '../util/Math';
 
 export enum Camera_Movement {
     FORWARD,

@@ -1,6 +1,6 @@
 import { Shader } from "../TSE/Shader";
 import { gl } from "../util/GL";
-import { m4 } from "../util/math";
+import { m4 } from "../util/Math";
 import { AiNode, Skin } from "./AiNode";
 import { Mesh } from "./Mesh";
 import { Animation } from "./Animation";
