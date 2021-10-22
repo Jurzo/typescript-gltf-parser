@@ -1,5 +1,5 @@
-import { GLTFImporter } from "../Scene/GLTFImporter";
-import { Asset } from "../Scene/Asset";
+import { GLTFImporter } from "../Asset/GLTFImporter";
+import { Asset } from "../Asset/Asset";
 import { gl, GLUtilities } from "../util/GL";
 import { m4 } from "../util/math";
 import { Camera } from "./Camera";
@@ -58,7 +58,7 @@ export class Engine {
     }
 
     private loop(now: number): void {
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         const deltaTime = now - this.lastFrame;
         this.lastFrame = now;

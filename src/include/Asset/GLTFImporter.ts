@@ -4,6 +4,7 @@ import { AiNode, Skin } from "./AiNode";
 import { loadModel } from "./GLTFLoader";
 import { Asset } from "./Asset";
 import { gl } from "../util/GL";
+import { Animation, AnimChannel, Sampler } from "./Animation";
 
 export class GLTFImporter {
     private gltf: gltfStructure;
@@ -28,7 +29,14 @@ export class GLTFImporter {
         for (let i = 0; i < this.gltf.nodes.length; i++) {
             nodes.push(this.parseNode(i));
         }
-        return new Asset(roots, nodes, this.skins);
+
+        const asset = new Asset(roots, nodes, this.skins);
+        let animations: Animation[] = [];
+        if (this.gltf.animations !== undefined) {
+            animations = this.parseAnimations();
+            for (const anim of animations) asset.addAnimation(anim);
+        }
+        return asset;
     }
 
     private parseNode(nodeID: number): AiNode {
@@ -89,7 +97,7 @@ export class GLTFImporter {
                     count,
                     byteOffset,
                     byteStride
-                    );
+                );
 
                 return {
                     buffer,
@@ -112,7 +120,7 @@ export class GLTFImporter {
                 accessor.count,
                 byteOffset,
                 byteStride
-                );
+            );
 
             const VAO = generateVAO(vertexData, indexBuffer);
 
@@ -146,6 +154,66 @@ export class GLTFImporter {
         }
         this.skins.push(skin);
         return this.skins.length - 1;
+    }
+
+    private parseAnimations(): Animation[] {
+        return this.gltf.animations.map(animation => {
+            const name = animation.name || 'undefined';
+
+            const samplers: Sampler[] = animation.samplers.map(sampler => {
+                const interpolation = sampler.interpolation;
+                const accessor = this.gltf.accessors[sampler.output];
+                const bufferView = this.gltf.bufferViews[accessor.bufferView];
+                const buffer = this.buffers[bufferView.buffer];
+                const byteOffset = bufferView.byteOffset + (accessor.byteOffset || 0);
+                const byteStride = bufferView.byteStride || 0;
+                const outputBuffer = readBuffer(
+                    buffer,
+                    accessor.type,
+                    accessor.componentType,
+                    accessor.count,
+                    byteOffset,
+                    byteStride
+                );
+                return {
+                    output: outputBuffer,
+                    interpolation: interpolation
+                }
+            });
+
+            const animationChannels: AnimChannel[] = animation.channels.map(channel => {
+                return {
+                    target: channel.target.node,
+                    property: channel.target.path,
+                    sampler: channel.sampler
+                }
+            });
+
+            // All the samplers need to have the same input on a single animation I assume
+            const inputAccessor = this.gltf.accessors[animation.samplers[0].input];
+            const min = inputAccessor.min[0];
+            const max = inputAccessor.max[0];
+            const bufferView = this.gltf.bufferViews[inputAccessor.bufferView];
+            const buffer = this.buffers[bufferView.buffer];
+            const byteOffset = bufferView.byteOffset + (inputAccessor.byteOffset || 0);
+            const byteStride = bufferView.byteStride || 0;
+            const inputBuffer = readBuffer(
+                buffer,
+                inputAccessor.type,
+                inputAccessor.componentType,
+                inputAccessor.count,
+                byteOffset,
+                byteStride
+            );
+
+            return {
+                channels: animationChannels,
+                samplers: samplers,
+                input: inputBuffer,
+                min: min,
+                max: max
+            }
+        })
     }
 }
 
