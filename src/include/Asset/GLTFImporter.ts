@@ -209,7 +209,7 @@ export class GLTFImporter {
             return {
                 channels: animationChannels,
                 samplers: samplers,
-                input: inputBuffer,
+                input: readBufferValues(inputBuffer, inputAccessor.componentType),
                 min: min,
                 max: max
             }
@@ -289,10 +289,24 @@ const typeToCount: { [key: string]: number } = {
     MAT4: 16
 }
 
-const componentByteSize = (type: number): number => {
-    if (type === gl.UNSIGNED_BYTE) return 1;
-    if (type === gl.UNSIGNED_SHORT) return 2;
-    if (type === gl.FLOAT) return 4;
-    if (type === gl.INT) return 4;
+const componentByteSize = (componentType: number): number => {
+    if (componentType === gl.UNSIGNED_BYTE) return 1;
+    if (componentType === gl.UNSIGNED_SHORT) return 2;
+    if (componentType === gl.FLOAT) return 4;
+    if (componentType === gl.INT) return 4;
     return -1;
+}
+
+const readBufferValues = (buffer: ArrayBuffer, componentType: number): number[] => {
+    let dataView: Uint8Array | Uint16Array | Uint32Array | Float32Array | Int32Array;
+    if (componentType === gl.UNSIGNED_BYTE) dataView = new Uint8Array(buffer);
+    if (componentType === gl.UNSIGNED_SHORT) dataView = new Uint16Array(buffer);
+    if (componentType === gl.FLOAT) dataView = new Float32Array(buffer);
+    if (componentType === gl.INT) dataView = new Int32Array(buffer);
+
+    const numbers: number[] = [];
+    for (let i = 0; i < dataView.length; i++) {
+        numbers.push(dataView[i]);
+    }
+    return numbers;
 }

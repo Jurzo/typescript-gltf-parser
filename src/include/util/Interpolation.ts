@@ -1,6 +1,6 @@
 import { v3, v4 } from "./Math";
 
-export const interpolateValue = (last: number, next: number, current: number): number => {
+export const interpolationValue = (last: number, next: number, current: number): number => {
     return (current - last) / (next - last);
 }
 

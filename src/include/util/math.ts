@@ -311,3 +311,29 @@ export const v4 = {
         return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2] + v1[3] * v2[3];
     }
 }
+
+/**
+ * Returns the index to the previous value of the specified value from the list.
+ * Expects the value to be less than the maximum value in the array.
+ * @param list 
+ * @param value 
+ * @returns index of the item previous to the selected value.
+ */
+export const findPrevious = (list: number[], value: number): number => {
+    let L = 0;
+    let R = list.length -1;
+    // If list size is 2 return L
+    if (R === 1) return L;
+    while (L <= R) {
+        const M = Math.floor((L + R) / 2);
+        const middle = list[M];
+        const next = list[M+1];
+        if (middle < value) {
+            if (next > value) return M;
+            L = M + 1;
+        } else if (middle > value) {
+            R = M - 1;
+        } else return M;
+    }
+    return null;
+}

@@ -43,7 +43,7 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
 
         const importer = new GLTFImporter();
-        importer.importModel('resources/3-bones.gltf')
+        importer.importModel('resources/untitled.gltf')
             .then(asset => {
                 this.asset = asset;
                 this.asset.setShader(this.shader);

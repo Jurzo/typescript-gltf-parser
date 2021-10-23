@@ -1,9 +1,10 @@
 import { Shader } from "../TSE/Shader";
 import { gl } from "../util/GL";
-import { m4 } from "../util/Math";
+import { findPrevious, m4 } from "../util/Math";
 import { AiNode, Skin } from "./AiNode";
 import { Mesh } from "./Mesh";
 import { Animation } from "./Animation";
+import { interpolationValue } from "../util/Interpolation";
 
 export class Asset {
     public location: number[]
@@ -77,7 +78,14 @@ export class Asset {
     public addAnimation(animation: Animation): void {
         if (!this.animations) this.animations = [];
         this.animations.push(animation);
-        console.log(new Float32Array(this.animations[0].samplers[4].output));
+        console.log(this.animations[0].input);
+        const time = 0.0;
+        const prev = findPrevious(this.animations[0].input, time);
+        const x1 = this.animations[0].input[prev];
+        const x2 = this.animations[0].input[prev + 1];
+        const t = interpolationValue(x1, x2, time);
+        console.log(x1, time, x2, t);
+        //console.log(new Float32Array(this.animations[0].samplers[4].output));
     }
 
     private renderNode(nodeId: number): void {

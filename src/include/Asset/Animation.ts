@@ -11,7 +11,7 @@ export interface AnimChannel {
 
 export interface Animation {
     channels: AnimChannel[];
-    input: ArrayBuffer;
+    input: number[];
     samplers: Sampler[];
     min: number;
     max: number;
