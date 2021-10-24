@@ -43,7 +43,7 @@ export class Engine {
         this.uniformLocations.push(gl.getUniformLocation(this.shader.getProgram(), 'projection'));
 
         const importer = new GLTFImporter();
-        importer.importModel('resources/untitled.gltf')
+        importer.importModel('resources/cubes-anim.gltf')
             .then(asset => {
                 this.asset = asset;
                 this.asset.setShader(this.shader);
@@ -72,7 +72,11 @@ export class Engine {
         gl.uniformMatrix4fv(this.uniformLocations[0], false, model);
         gl.uniformMatrix4fv(this.uniformLocations[1], false, view);
         gl.uniformMatrix4fv(this.uniformLocations[2], false, projection);
-        if (this.asset) this.asset.render();
+        if (this.asset) {
+            this.asset.animate(deltaTime);
+            this.asset.calculateLocals();
+            this.asset.render();
+        }
         requestAnimationFrame(this.loop.bind( this ));
     }
 

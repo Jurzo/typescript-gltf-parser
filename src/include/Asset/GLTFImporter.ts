@@ -176,7 +176,7 @@ export class GLTFImporter {
                     byteStride
                 );
                 return {
-                    output: outputBuffer,
+                    output: new Float32Array(outputBuffer),
                     interpolation: interpolation
                 }
             });

@@ -4,7 +4,7 @@ import { findPrevious, m4 } from "../util/Math";
 import { AiNode, Skin } from "./AiNode";
 import { Mesh } from "./Mesh";
 import { Animation } from "./Animation";
-import { interpolationValue } from "../util/Interpolation";
+import { interpolationValue, lerp, slerp } from "../util/Interpolation";
 
 export class Asset {
     public location: number[]
@@ -19,6 +19,7 @@ export class Asset {
     private nodes: AiNode[];
     private skins: Skin[];
     private animations: Animation[];
+    private animationTime: number;
 
     constructor(roots: number[], nodes: AiNode[], skins: Skin[]) {
         this.roots = roots;
@@ -31,6 +32,7 @@ export class Asset {
         };
         this.scale = 1;
         this.calculateLocals();
+        this.animationTime = 0;
     }
 
     public setShader(shader: Shader): void {
@@ -54,7 +56,7 @@ export class Asset {
     private calculateNodeLocals(nodeId: number, parentTransform: number[]): void {
         const node = this.nodes[nodeId];
         const translation = node.translation || [0, 0, 0];
-        const rotation= node.rotation || [0, 0, 0, 0];
+        const rotation = node.rotation || [0, 0, 0, 0];
         const scale = node.scale || [1, 1, 1];
         let transform = m4.identity();
         transform = m4.translate(transform, ...translation);
@@ -75,16 +77,28 @@ export class Asset {
         })
     }
 
-    public addAnimation(animation: Animation): void {
-        if (!this.animations) this.animations = [];
-        this.animations.push(animation);
-        console.log(this.animations[0].input);
-        const time = 0.0;
+    public animate(delta: number): void {
+        this.animationTime += (delta / 1000.0);
+        if (this.animationTime > this.animations[0].max)
+            this.animationTime -= this.animations[0].max;
+        const time = this.animationTime;
         const prev = findPrevious(this.animations[0].input, time);
         const x1 = this.animations[0].input[prev];
         const x2 = this.animations[0].input[prev + 1];
         const t = interpolationValue(x1, x2, time);
-        console.log(x1, time, x2, t);
+        const vec1: [number, number, number, number] = [0, 0, 0, 0];
+        const vec2: [number, number, number, number] = [0, 0, 0, 0];
+        for (let i = 0; i < 4; i++) {
+            vec1[i] = this.animations[0].samplers[0].output[prev * 4 + i];
+            vec2[i] = this.animations[0].samplers[0].output[(prev + 1) * 4 + i];
+        }
+        const vec3 = slerp(vec1, vec2, t);
+        this.nodes[this.animations[0].channels[0].target].rotation = [vec3[0], vec3[1], vec3[2], vec3[3]];
+    }
+
+    public addAnimation(animation: Animation): void {
+        if (!this.animations) this.animations = [];
+        this.animations.push(animation);
         //console.log(new Float32Array(this.animations[0].samplers[4].output));
     }
 

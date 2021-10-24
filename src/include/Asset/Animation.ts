@@ -1,5 +1,5 @@
 export interface Sampler {
-    output: ArrayBuffer;
+    output: Float32Array;
     interpolation: string; //"LINEAR" | "STEP" | "CUBICSPLINE"
 }
 
