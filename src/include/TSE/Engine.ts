@@ -47,8 +47,8 @@ export class Engine {
             .then(asset => {
                 this.asset = asset;
                 this.asset.setShader(this.shader);
-                /* this.asset.scale = 0.5;
-                this.asset.rotation = {axis: [0, 1, 0], angle: 75}; */
+                this.asset.scale = 0.5;
+                //this.asset.rotation = {axis: [0, 1, 0], angle: 75};
                 this.asset.calculateLocals();
                 this.asset.jointMatrices();
             });

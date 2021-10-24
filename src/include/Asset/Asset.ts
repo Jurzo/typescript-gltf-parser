@@ -86,14 +86,31 @@ export class Asset {
         const x1 = this.animations[0].input[prev];
         const x2 = this.animations[0].input[prev + 1];
         const t = interpolationValue(x1, x2, time);
-        const vec1: [number, number, number, number] = [0, 0, 0, 0];
-        const vec2: [number, number, number, number] = [0, 0, 0, 0];
-        for (let i = 0; i < 4; i++) {
-            vec1[i] = this.animations[0].samplers[0].output[prev * 4 + i];
-            vec2[i] = this.animations[0].samplers[0].output[(prev + 1) * 4 + i];
+        for (const animation of this.animations) {
+            animation.channels.forEach(channel => {
+                const vec1: number[] = [];
+                const vec2: number[] = [];
+                const type: string = channel.property;
+                let components: number;
+                if (type === "rotation") {
+                    components = 4;
+                } else {
+                    components = 3;
+                }
+                for (let i = 0; i < components; i++) {
+                    const sampler = animation.samplers[channel.sampler];
+                    vec1.push(sampler.output[prev * components + i]);
+                    vec2.push(sampler.output[(prev + 1) * components + i]);
+                }
+                let vec3: number[];
+                if (components === 4) {
+                    vec3 = slerp(vec1, vec2, t);
+                } else {
+                    vec3 = lerp(vec1, vec2, t);
+                }
+                this.nodes[channel.target][type] = vec3;
+            });
         }
-        const vec3 = slerp(vec1, vec2, t);
-        this.nodes[this.animations[0].channels[0].target].rotation = [vec3[0], vec3[1], vec3[2], vec3[3]];
     }
 
     public addAnimation(animation: Animation): void {

@@ -1,7 +1,7 @@
 import { Mesh } from "./Mesh";
 
 // change children to list of indices and make asset contain a list of nodes and references to root indices.
-export interface AiNode {
+export interface AiNode  {
     name?: string;
     children?: number[];
     matrix?: number[];
@@ -11,6 +11,7 @@ export interface AiNode {
     mesh?: Mesh;
     skin?: number;
     localTransform?: number[];
+    [vector: string]: string | number[] | Mesh | number;
 }
 
 export interface Skin {
